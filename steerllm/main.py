@@ -3,6 +3,7 @@ import transformer_lens
 import pandas as pd
 import os
 import pickle
+from typing import Any
 
 # Constants
 PROMPT_COLUMN = "Prompt"
@@ -15,7 +16,7 @@ MODEL_NAME = "gpt2-small"
 PROMPT_FILE_PATH = os.path.join(DATA_PATH, PROMPT_FILE)
 
 # Load ethical prompts
-def csv_to_dictionary(filename: str) -> dict[str, any]:
+def csv_to_dictionary(filename: str) -> dict[str, Any]:
     # with open(filename, 'r') as file:
     #     reader = csv.DictReader(file)
     df = pd.read_csv(filename)
@@ -26,7 +27,7 @@ def csv_to_dictionary(filename: str) -> dict[str, any]:
 
 
 # Compute forward pass and cache data
-def compute_activations(model: any, prompts: list[str]) -> any:
+def compute_activations(model: Any, prompts: list[str]) -> Any:
     activations_cache = []
     for prompt in prompts:
         # Run the model and get logits and activations
@@ -37,13 +38,13 @@ def compute_activations(model: any, prompts: list[str]) -> any:
 
 
 # Write cache data
-def write_cache(filename: str, cache_data: any) -> None:
+def write_cache(filename: str, cache_data: Any) -> None:
     with open(filename, 'wb') as f:
         pickle.dump(cache_data, f)
 
 
 # Load cached data from file
-def load_cache(filename: str) -> any:
+def load_cache(filename: str) -> Any:
     with open(filename, 'rb') as f:
         data = pickle.load(f)
     return data
