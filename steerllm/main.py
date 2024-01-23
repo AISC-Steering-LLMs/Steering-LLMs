@@ -13,18 +13,20 @@ import sklearn
 from sklearn.manifold import TSNE
 from typing import Any
 from dataclasses import dataclass
-
+import logging
+import datetime
+import json
 
 # Constants
 PROMPT_COLUMN = "Prompt"
 ETHICAL_AREA_COLUMN = "Ethical_Area"
 POS_COLUMN = "Positive"
 DATA_PATH = os.path.join("..", "data")
-PROMPT_FILE = "prompts.csv"
 # PROMPT_FILE = "prompts.csv"
-OUTPUT_PICKLE = os.path.join(DATA_PATH, "activations_cache.pkl")
+# PROMPT_FILE = "prompts.csv"
+OUTPUT_PICKLE = os.path.join(DATA_PATH, "outputs", "activations_cache.pkl")
 MODEL_NAME = "gpt2-small"
-PROMPT_FILE_PATH = os.path.join(DATA_PATH, PROMPT_FILE)
+# PROMPT_FILE_PATH = os.path.join(DATA_PATH, "inputs", PROMPT_FILE)
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
@@ -67,12 +69,6 @@ def compute_activations(model: Any, activations_cache: list[Activation]) -> None
         act.raw_activations = raw_activations
 
 
-# Write cache data
-def write_cache(filename: str, cache_data: Any) -> None:
-    with open(filename, 'wb') as f:
-        pickle.dump(cache_data, f)
-
-
 # Load cached data from file
 def load_cache(filename: str) -> Any:
     with open(filename, 'rb') as f:
@@ -103,7 +99,9 @@ def populate_data(prompts_dict: dict[str, Any]) -> list[Activation]:
     return activations_cache
 
 
-def tsne_plot(activations_cache: list[Activation], plot_fn: str) -> None:
+
+
+def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
     data = np.stack([act.hidden_states[-1] for act in activations_cache])
     labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
 
@@ -115,7 +113,52 @@ def tsne_plot(activations_cache: list[Activation], plot_fn: str) -> None:
     df["Ethical Area"] = labels
     ax = sns.scatterplot(x='X', y='Y',hue='Ethical Area',data=df)
     
-    plt.savefig(plot_fn)
+    plot_path = os.path.join(images_dir, "tsne_plot.png")
+    plt.savefig(plot_path)
+
+
+def create_directories() -> str:
+    current_datetime = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    experiment_base_dir = os.path.join(DATA_PATH, "outputs", current_datetime)
+    images_dir = os.path.join(experiment_base_dir, 'images')
+
+    os.makedirs(experiment_base_dir)
+    os.makedirs(images_dir)
+
+    return experiment_base_dir, images_dir
+
+
+# Write cache data
+def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:
+    filename = os.path.join(experiment_base_dir, "activations_cache.pkl")
+    with open(filename, 'wb') as f:
+        pickle.dump(activations_cache, f)
+
+# Write experiment parameters
+def write_experiement_parameters(experiment_params: dict, experiment_base_dir: str) -> None:
+    with open(os.path.join(experiment_base_dir, "experiment_parameters.json"), 'w') as f:
+        json.dump(experiment_params, f)
+
+# Logging commented out for now
+# Alternative to just saving a json file of parameters
+# Overkill
+
+# def setup_logger(path: str) -> logging.Logger:
+#     full_path = os.path.join(experiment_base_dir, "experiment_parameters.log")
+#     logger = logging.getLogger(__name__)
+#     logger.setLevel(logging.INFO)
+#     handler = logging.FileHandler(full_path)
+#     handler.setLevel(logging.INFO)
+#     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#     handler.setFormatter(formatter)
+#     logger.addHandler(handler)
+#     return logger
+
+# def log_parameters(params, logger):
+#     for key, value in params.items():
+#         logger.info(f"{key}: {value}")
+
     
 
 if __name__ == "__main__":
@@ -128,11 +171,32 @@ if __name__ == "__main__":
         print("Please provide a filename as an argument.")
         sys.exit(1)
 
+    experiment_params = {
+        'model_name': MODEL_NAME,
+        'experiment_notes': "Testing out the transformer lens library."
+    }
 
-    file_path = sys.argv[1]
+    experiment_base_dir, images_dir = create_directories()
+
+    input_path = sys.argv[1]
     # file_path = PROMPT_FILE_PATH
-    prompts_dict = csv_to_dictionary(file_path)
-    activations_cache = populate_data(prompts_dict)
+    prompts_dict = csv_to_dictionary(input_path)
+
+    # Copy the specific prompts being used from inputs to outputs.
+    # Why? While we are still figuring out which prompt datasets work.
+    # Prompt datsets as inputs which don't work will probably be deleted over time.
+    # Saving them for a specific output lets us track which prompts were used for which output.
+    # We can stop doing this once we have prompts that work.
+    input_file_stem  = os.path.splitext(os.path.basename(input_path))[0]
+    prompts_output_path = os.path.join(experiment_base_dir, input_file_stem+".csv")
+    prompts_df = pd.DataFrame(prompts_dict)
+    prompts_df.to_csv(prompts_output_path)
+
+    print(prompts_dict.keys())
+    print(len(prompts_dict.keys()))
+    # Log the number of prompts
+
+    activations_cache  = populate_data(prompts_dict)
 
     # Load a model (eg GPT-2 Small)
     # GPT-2 Small uses embedding 768 dimension word/token embedding
@@ -166,13 +230,13 @@ if __name__ == "__main__":
     # print(activations_cache)
         
     # Print last hidden state and prompt
-    for activation in activations_cache:
-        print(activation.prompt)
-        print(activation.hidden_states[-1])
+    # for activation in activations_cache:
+        # print(activation.prompt)
+        # print(activation.hidden_states[-1])
         # data.append(activation.hidden_states[-1])
     
     # TODO: Give a better name
-    tsne_plot(activations_cache, "plot.png")
+    tsne_plot(activations_cache, images_dir)
 
     # plt.show()
         
@@ -209,7 +273,11 @@ if __name__ == "__main__":
     # TODO: Cluster with PCS in addition to TSNE, figure out which are most simlar
     # For now, using the last layer, last token as representative embedding for input
     # np.digitize useful for raster plot - https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/classify-plot-raster-data-in-python/
-    
-    
-    write_cache(OUTPUT_PICKLE, activations_cache)
+
+    # Logging commented out for now
+    # logger = setup_logger(experiment_base_dir)
+    # log_parameters(experiment_params, logger)
+
+    write_experiement_parameters(experiment_params, experiment_base_dir)
+    write_activations_cache(activations_cache, experiment_base_dir)
 
