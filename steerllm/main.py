@@ -13,7 +13,6 @@ import sklearn
 from sklearn.manifold import TSNE
 from typing import Any
 from dataclasses import dataclass
-import logging
 import datetime
 import json
 
@@ -86,6 +85,7 @@ def add_numpy_hidden_states(activations_cache: list[Activation]) -> None:
                 # Convert to numpy array
                 numpy_activation = raw_act[hook_name].cpu().numpy()
                 # Get only the last token activations using '-1'
+                # print("numpy_activation.shape", numpy_activation.shape)
                 act.hidden_states.append(numpy_activation[0][-1])
 
 
@@ -102,20 +102,31 @@ def populate_data(prompts_dict: dict[str, Any]) -> list[Activation]:
 
 
 def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
-    data = np.stack([act.hidden_states[-1] for act in activations_cache])
-    labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
 
-    SEED = 42
-    tsne = TSNE(n_components=2, random_state=SEED)
-    embedded_data = tsne.fit_transform(data)
-    
-    df = pd.DataFrame(embedded_data, columns=["X", "Y"])
-    df["Ethical Area"] = labels
-    ax = sns.scatterplot(x='X', y='Y',hue='Ethical Area',data=df)
-    
-    plot_path = os.path.join(images_dir, "tsne_plot.png")
-    plt.savefig(plot_path)
 
+    # Using activations_cache[0] is arbitrary as they all have the same number of layers
+    # (12 with GPT-2) with representations
+    for layer in range(len(activations_cache[0].hidden_states)):
+        
+        # print(f"layer {layer}")
+
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+
+        # print("data.shape", data.shape)
+
+        SEED = 42
+        tsne = TSNE(n_components=2, random_state=SEED)
+        embedded_data = tsne.fit_transform(data)
+        
+        df = pd.DataFrame(embedded_data, columns=["X", "Y"])
+        df["Ethical Area"] = labels
+        ax = sns.scatterplot(x='X', y='Y', hue='Ethical Area', data=df)
+        
+        plot_path = os.path.join(images_dir, "tsne_plot_layer_"+str(layer)+".png")
+        plt.savefig(plot_path)
+
+        plt.clf()
 
 def create_directories() -> str:
     current_datetime = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -140,37 +151,25 @@ def write_experiement_parameters(experiment_params: dict, experiment_base_dir: s
     with open(os.path.join(experiment_base_dir, "experiment_parameters.json"), 'w') as f:
         json.dump(experiment_params, f)
 
-# Logging commented out for now
-# Alternative to just saving a json file of parameters
-# Overkill
-
-# def setup_logger(path: str) -> logging.Logger:
-#     full_path = os.path.join(experiment_base_dir, "experiment_parameters.log")
-#     logger = logging.getLogger(__name__)
-#     logger.setLevel(logging.INFO)
-#     handler = logging.FileHandler(full_path)
-#     handler.setLevel(logging.INFO)
-#     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#     handler.setFormatter(formatter)
-#     logger.addHandler(handler)
-#     return logger
-
-# def log_parameters(params, logger):
-#     for key, value in params.items():
-#         logger.info(f"{key}: {value}")
-
-    
+  
 
 if __name__ == "__main__":
     model = transformer_lens.HookedTransformer.from_pretrained(MODEL_NAME)
 
     # Run with:
-    # >>> python3 main.py ../data/prompts_good_evil_justice.xlsx
+    # >>> python3 main.py ../data/inputs/prompts_good_evil_justice.xlsx
     # Check if a filename is provided as an argument
     if len(sys.argv) < 2:
         print("Please provide a filename as an argument.")
         sys.exit(1)
 
+    # This dictionary will be used to track the parameters of the experiment.
+    # We can add more to it. This is just a start.
+    # Have you used the Hydra library? It might be good to
+    # use Hydra to manage the parameters in a seperate config file if we have a lot
+    # that changes from run to run. We'd have one place where we know to go to change things.
+    # It also lets us seperate out CONSTANTS at the top of the file from parameters that change. 
+    # Probably overkill for now.
     experiment_params = {
         'model_name': MODEL_NAME,
         'experiment_notes': "Testing out the transformer lens library."
@@ -182,19 +181,17 @@ if __name__ == "__main__":
     # file_path = PROMPT_FILE_PATH
     prompts_dict = csv_to_dictionary(input_path)
 
+    # print(len(prompts_dict["Prompt"]))
+
     # Copy the specific prompts being used from inputs to outputs.
     # Why? While we are still figuring out which prompt datasets work.
-    # Prompt datsets as inputs which don't work will probably be deleted over time.
+    # Prompt datasets as inputs which don't work will probably be deleted over time.
     # Saving them for a specific output lets us track which prompts were used for which output.
     # We can stop doing this once we have prompts that work.
     input_file_stem  = os.path.splitext(os.path.basename(input_path))[0]
     prompts_output_path = os.path.join(experiment_base_dir, input_file_stem+".csv")
     prompts_df = pd.DataFrame(prompts_dict)
     prompts_df.to_csv(prompts_output_path)
-
-    print(prompts_dict.keys())
-    print(len(prompts_dict.keys()))
-    # Log the number of prompts
 
     activations_cache  = populate_data(prompts_dict)
 
@@ -274,10 +271,9 @@ if __name__ == "__main__":
     # For now, using the last layer, last token as representative embedding for input
     # np.digitize useful for raster plot - https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/classify-plot-raster-data-in-python/
 
-    # Logging commented out for now
-    # logger = setup_logger(experiment_base_dir)
-    # log_parameters(experiment_params, logger)
+
 
     write_experiement_parameters(experiment_params, experiment_base_dir)
+
     write_activations_cache(activations_cache, experiment_base_dir)
 
