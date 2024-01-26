@@ -11,6 +11,7 @@ import torch
 import sys
 import sklearn
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 from typing import Any
 from dataclasses import dataclass
 import datetime
@@ -100,10 +101,7 @@ def populate_data(prompts_dict: dict[str, Any]) -> list[Activation]:
     return activations_cache
 
 
-
-
 # Make tsne plot for hidden state of every layer
-# For now, using the last layer, last token as representative embedding for input
 def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
 
@@ -126,6 +124,35 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
         ax = sns.scatterplot(x='X', y='Y', hue='Ethical Area', data=df)
         
         plot_path = os.path.join(images_dir, f"tsne_plot_layer_{layer}.png")
+        plt.savefig(plot_path)
+
+        plt.clf()
+
+
+
+# Make PCA plot for hidden state of every layer
+def pca_plot(activations_cache: list[Activation], images_dir: str) -> None:
+
+
+    # Using activations_cache[0] is arbitrary as they all have the same number of layers
+    # (12 with GPT-2) with representations
+    for layer in range(len(activations_cache[0].hidden_states)):
+        
+        # print(f"layer {layer}")
+
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+
+        # print("data.shape", data.shape)
+
+        pca = PCA(n_components=2, random_state=SEED)
+        embedded_data = pca.fit_transform(data)
+        
+        df = pd.DataFrame(embedded_data, columns=["X", "Y"])
+        df["Ethical Area"] = labels
+        ax = sns.scatterplot(x='X', y='Y', hue='Ethical Area', data=df)
+        
+        plot_path = os.path.join(images_dir, f"pca_plot_layer_{layer}.png")
         plt.savefig(plot_path)
 
         plt.clf()
@@ -206,6 +233,7 @@ if __name__ == "__main__":
     add_numpy_hidden_states(activations_cache)
     
     tsne_plot(activations_cache, images_dir)
+    pca_plot(activations_cache, images_dir)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
