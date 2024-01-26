@@ -1,0 +1,44 @@
+print(activations_cache[0]["blocks.0.hook_resid_post"].cpu().numpy())
+>>> print(np.max(activations_cache[0]["blocks.0.hook_resid_post"].cpu().numpy()))       
+120.465195                                                                              
+>>> print(np.mean(activations_cache[0]["blocks.0.hook_resid_post"].cpu().numpy()))      
+6.321705e-09      
+>>> print(np.std(activations_cache[0]["blocks.0.hook_resid_post"].cpu().numpy()))       
+2.7253985 
+
+After each, we scale and normalize. But we can use the unscaled version or the scaled version.
+Scaled version of output of block 0 is
+blocks.1.ln1.hook_scale
+print(np.std(activations_cache[0]["blocks.1.ln1.hook_scale"].cpu().numpy()))
+and normalized is
+blocks.1.ln1.hook_normalized
+print(np.std(activations_cache[0]["blocks.1.ln1.hook_normalized"].cpu().numpy()))
+0.99999887
+I don't think the normalization actually matters much for our purposes, I think it is fine.
+
+n_layers: 12. The number of transformer blocks in the model (a block contains an attention layer and an MLP layer)
+n_heads: 12. The number of attention heads per attention layer
+d_model: 768. The residual stream width.
+d_head: 64. The internal dimension of an attention head activation.
+d_mlp: 3072. The internal dimension of the MLP layers (ie the number of neurons).
+d_vocab: 50267. The number of tokens in the vocabulary.
+n_ctx: 1024. The maximum number of tokens in an input prompt.
+
+
+
+Load a model (eg GPT-2 Small)
+GPT-2 Small uses embedding 768 dimension word/token embedding
+http://jalammar.github.io/illustrated-gpt2/
+1024 medium, 1280 large, 1600 extra large
+>>> print(activations_cache[0]['hook_embed'].shape)                                     
+torch.Size([1, 11, 768])   
+This represents the input, 11 tokens each with 768 dimensions
+Each layer has k, q, v vectors. Attention scores. Normalize. Feed forward/MLP. Residual Connection
+Can get all of the steps from transformer lens
+transformer_lens supported models https://github.com/neelnanda-io/TransformerLens/blob/main/transformer_lens/loading_from_pretrained.py
+
+Hooks can be used to change model
+have access to all the vectors, as well as scaling, normalization, how the residual layer is added, etc.
+blocks.0.hook_resid_post is the final output
+transformer_lens demo - https://colab.research.google.com/github/neelnanda-io/TransformerLens/blob/main/demos/Main_Demo.ipynb#scrollTo=O15dgROWq3zy
+
