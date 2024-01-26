@@ -20,7 +20,8 @@ import json
 PROMPT_COLUMN = "Prompt"
 ETHICAL_AREA_COLUMN = "Ethical_Area"
 POS_COLUMN = "Positive"
-DATA_PATH = os.path.join("..", "data")
+SRC_PATH = os.path.dirname(__file__)
+DATA_PATH = os.path.join(SRC_PATH, "..", "data")
 OUTPUT_PICKLE = os.path.join(DATA_PATH, "outputs", "activations_cache.pkl")
 MODEL_NAME = "gpt2-small"
 SEED = 42
@@ -132,7 +133,7 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
 # Initialize output directory with timestamp
 def create_output_directories() -> tuple[str, str]:
-    current_datetime = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    current_datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
 
     experiment_base_dir = os.path.join(DATA_PATH, "outputs", current_datetime)
     images_dir = os.path.join(experiment_base_dir, 'images')
@@ -199,7 +200,7 @@ if __name__ == "__main__":
 
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
-
+    
     compute_activations(model, activations_cache)
     
     add_numpy_hidden_states(activations_cache)
