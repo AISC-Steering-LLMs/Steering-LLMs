@@ -163,6 +163,41 @@ def pca_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
         plt.clf()
 
+def raster_plot(activations_cache: list[Activation], plot_fn: str) -> None:
+    # Initialize an empty list to hold all activations for all prompts
+    all_activations = []
+
+    # Loop through each prompt's activations and concatenate them across layers
+    for act in activations_cache:
+        # Ensure each layer_activation is a 2D array with shape (1, number_of_neurons)
+        prompt_activations = np.concatenate([layer_activation[np.newaxis, :] for layer_activation in act.hidden_states], axis=0)
+        all_activations.append(prompt_activations)
+
+    # Stack all prompt activations to create a 3D array
+    all_activations = np.stack(all_activations)
+    # Reduce the dimensionality by averaging across neurons
+    all_activations = all_activations.mean(axis=2)
+
+    # Set the font size for the plot
+    plt.rcParams.update({'font.size': 30})  # Adjust the font size as needed
+
+    # Create the raster plot
+    plt.figure(figsize=(15, len(activations_cache) + 2))  # Increase figure size for padding
+    plt.imshow(all_activations, cmap='hot', aspect='auto', interpolation='nearest')
+    plt.colorbar(label='Activation')
+    plt.xlabel('Layers')
+    plt.ylabel('Prompts')
+    plt.title('Raster Plot of Neural Activations Across Layers')
+
+    # Remove the y-ticks labels to avoid clutter
+    plt.yticks([])
+
+    # Save the plot to a file
+    plot_path = os.path.join(images_dir, f"raster_plot.png")
+    plt.savefig(plot_path)
+
+    plt.clf()
+
 
 # Initialize output directory with timestamp
 def create_output_directories() -> tuple[str, str]:
@@ -247,6 +282,7 @@ if __name__ == "__main__":
     
     tsne_plot(activations_cache, images_dir)
     pca_plot(activations_cache, images_dir)
+    raster_plot(activations_cache, images_dir)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
