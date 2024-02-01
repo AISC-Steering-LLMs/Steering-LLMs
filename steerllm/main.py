@@ -16,15 +16,21 @@ from typing import Any
 from dataclasses import dataclass
 import datetime
 import json
+from omegaconf import DictConfig
+import hydra
+import shutil
 
 # Constants
+# If going forward with Hydra, we put everything here
+# That really is constant betweeen runs.
+# Everything that is configurable goes in config.yaml
+# The model name is now there.
 PROMPT_COLUMN = "Prompt"
 ETHICAL_AREA_COLUMN = "Ethical_Area"
 POS_COLUMN = "Positive"
 SRC_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(SRC_PATH, "..", "data")
 OUTPUT_PICKLE = os.path.join(DATA_PATH, "outputs", "activations_cache.pkl")
-MODEL_NAME = "gpt2-small"
 SEED = 42
 
 # May need to install tkinter if not included
@@ -160,6 +166,8 @@ def pca_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
 # Initialize output directory with timestamp
 def create_output_directories() -> tuple[str, str]:
+    # Note this is in UTC, so regardless of where the code is run,
+    # we can track when one experiment was run relative to another
     current_datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
 
     experiment_base_dir = os.path.join(DATA_PATH, "outputs", current_datetime)
@@ -187,7 +195,6 @@ def write_experiement_parameters(experiment_params: dict, experiment_base_dir: s
   
 
 if __name__ == "__main__":
-    model = transformer_lens.HookedTransformer.from_pretrained(MODEL_NAME)
 
     # Run with:
     # >>> python3 main.py ../data/inputs/prompts_good_evil_justice.xlsx
@@ -197,21 +204,27 @@ if __name__ == "__main__":
         print("Please provide a filename as an argument.")
         sys.exit(1)
 
-    # This dictionary will be used to track the parameters of the experiment.
-    # We can add more to it. This is just a start.
-    # It might be good to use Hydra to manage the parameters in a seperate
-    # config file if we have a lot that changes from run to run. We'd have one
-    # place where we know to go to change things. It also lets us seperate out
-    # CONSTANTS at the top of the file from parameters that change.
-    experiment_params = {
-        'model_name': MODEL_NAME,
-        'experiment_notes': "Testing out the transformer lens library."
-    }
 
-    experiment_base_dir, images_dir = create_output_directories()
+    # Initialize Hydra
+    hydra.initialize(config_path=".", version_base=None)
 
+    # Compose the configuration
+    cfg = hydra.compose("config.yaml")
+
+    # Load the model
+    model = transformer_lens.HookedTransformer.from_pretrained(cfg.model_name)
+
+    # Load the inputs (prompts)
     input_path = sys.argv[1]
     prompts_dict = csv_to_dictionary(input_path)
+
+    # Create output directories
+    experiment_base_dir, images_dir = create_output_directories()
+
+    # Copy the config.yaml file to the output directory
+    # Why? So we can see what the configuration was for a given run.
+    # config.yaml will change from run to run, so we want to save it for each run.
+    shutil.copyfile("config.yaml", os.path.join(experiment_base_dir, "config.yaml"))
 
     # Copy the specific prompts being used from inputs to outputs.
     # Why? While we are still figuring out which prompt datasets work.
@@ -245,8 +258,6 @@ if __name__ == "__main__":
     # TODO: Create the raster plot
     # np.digitize useful for raster plot - https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/classify-plot-raster-data-in-python/
     # TODO: Cluster with PCS in addition to TSNE, figure out which are most simlar
-
-    write_experiement_parameters(experiment_params, experiment_base_dir)
 
     write_activations_cache(activations_cache, experiment_base_dir)
 
