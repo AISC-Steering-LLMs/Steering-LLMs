@@ -1,6 +1,5 @@
 # Supported models listed here https://github.com/neelnanda-io/TransformerLens/blob/main/transformer_lens/loading_from_pretrained.py
-model_name: "gpt2-small"
+model_name: "gpt2-XL"
 experiment_notes: "Adding Hydra library for experiment configuration."
 prompts_sheet: "../data/inputs/prompts_good_evil_justice.xlsx"
 use_gpu: False
-write_cache: False

@@ -16,9 +16,10 @@ from typing import Any
 from dataclasses import dataclass
 import datetime
 import json
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import hydra
 import shutil
+from transformers import AutoTokenizer,AutoModelForCausalLM
 
 # Constants
 # If going forward with Hydra, we put everything here
@@ -112,7 +113,7 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
 
     # Using activations_cache[0] is arbitrary as they all have the same number of layers
-    # (12 with GPT-2) with representations
+    # (12 with GPT-2-small) with representations
     for layer in range(len(activations_cache[0].hidden_states)):
         
         # print(f"layer {layer}")
@@ -132,24 +133,18 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
         plot_path = os.path.join(images_dir, f"tsne_plot_layer_{layer}.png")
         plt.savefig(plot_path)
 
-        plt.clf()
+        plt.close()
 
 
 
 # Make PCA plot for hidden state of every layer
 def pca_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
-
     # Using activations_cache[0] is arbitrary as they all have the same number of layers
-    # (12 with GPT-2) with representations
     for layer in range(len(activations_cache[0].hidden_states)):
         
-        # print(f"layer {layer}")
-
         data = np.stack([act.hidden_states[layer] for act in activations_cache])
         labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-
-        # print("data.shape", data.shape)
 
         pca = PCA(n_components=2, random_state=SEED)
         embedded_data = pca.fit_transform(data)
@@ -161,42 +156,41 @@ def pca_plot(activations_cache: list[Activation], images_dir: str) -> None:
         plot_path = os.path.join(images_dir, f"pca_plot_layer_{layer}.png")
         plt.savefig(plot_path)
 
-        plt.clf()
+        plt.close()
 
-def raster_plot(activations_cache: list[Activation], plot_fn: str) -> None:
-    # Initialize an empty list to hold all activations for all prompts
-    all_activations = []
 
-    # Loop through each prompt's activations and concatenate them across layers
-    for act in activations_cache:
-        # Ensure each layer_activation is a 2D array with shape (1, number_of_neurons)
-        prompt_activations = np.concatenate([layer_activation[np.newaxis, :] for layer_activation in act.hidden_states], axis=0)
-        all_activations.append(prompt_activations)
+# Raster Plot has columns = Neurons and rows = Prompts. One chart for each layer
+def raster_plot(activations_cache: list[Activation],
+                images_dir: str,
+                compression: int=5) -> None:
+    # Using activations_cache[0] is arbitrary as they all have the same number of layers
+    for layer in range(len(activations_cache[0].hidden_states)):
+        
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        
+        # Set the font size for the plot
+        plt.rcParams.update({'font.size': (15 / compression)})
 
-    # Stack all prompt activations to create a 3D array
-    all_activations = np.stack(all_activations)
-    # Reduce the dimensionality by averaging across neurons
-    all_activations = all_activations.mean(axis=2)
+        neurons = activations_cache[0].hidden_states[0].size
+        # Create the raster plot
+        plt.figure(figsize=((neurons / (16 * compression)),
+                            (len(activations_cache) + 2) / (2 * compression)))
+        plt.imshow(data, cmap='hot', aspect='auto', interpolation="nearest")
+        plt.colorbar(label='Activation')
 
-    # Set the font size for the plot
-    plt.rcParams.update({'font.size': 30})  # Adjust the font size as needed
+        plt.xlabel('Neuron')
+        plt.ylabel('Prompts')
+        plt.title(f'Raster Plot of Neural Activations Layer {layer}')
 
-    # Create the raster plot
-    plt.figure(figsize=(15, len(activations_cache) + 2))  # Increase figure size for padding
-    plt.imshow(all_activations, cmap='hot', aspect='auto', interpolation='nearest')
-    plt.colorbar(label='Activation')
-    plt.xlabel('Layers')
-    plt.ylabel('Prompts')
-    plt.title('Raster Plot of Neural Activations Across Layers')
+        # Add Y-tick labels of the prompt
+        plt.yticks(range(len(activations_cache)),
+                   [activation.prompt for activation in activations_cache],
+                   wrap=True)
 
-    # Remove the y-ticks labels to avoid clutter
-    plt.yticks([])
+        plot_path = os.path.join(images_dir, f"raster_plot_layer_{layer}.svg")
+        plt.savefig(plot_path)
 
-    # Save the plot to a file
-    plot_path = os.path.join(images_dir, f"raster_plot.png")
-    plt.savefig(plot_path)
-
-    plt.clf()
+        plt.close()
 
 
 # Initialize output directory with timestamp
@@ -222,36 +216,31 @@ def write_activations_cache(activations_cache: Any, experiment_base_dir: str) ->
 
 
 # Write experiment parameters
-# TODO: Replace with hydra
 def write_experiement_parameters(experiment_params: dict, experiment_base_dir: str) -> None:
     with open(os.path.join(experiment_base_dir, "experiment_parameters.json"), 'w') as f:
         json.dump(experiment_params, f)
 
-  
 
-if __name__ == "__main__":
-
-    # Run with:
-    # >>> python3 main.py ../data/inputs/prompts_good_evil_justice.xlsx
-    # Check if a filename is provided as an argument
-    # TODO: Use hydra for command line arguments
-    if len(sys.argv) < 2:
-        print("Please provide a filename as an argument.")
-        sys.exit(1)
-
-
-    # Initialize Hydra
-    hydra.initialize(config_path=".", version_base=None)
-
-    # Compose the configuration
-    cfg = hydra.compose("config.yaml")
-
+@hydra.main(version_base=None, config_path=".", config_name="config")
+def main(cfg: DictConfig) -> None:  
+    if not cfg.use_gpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
     # Load the model
-    model = transformer_lens.HookedTransformer.from_pretrained(cfg.model_name)
+    # ie gpt2-small, gpt2-XL, meta-llama/Llama-2-7b-hf, meta-llama/Llama-2-7b-chat-hf
+    # For llama2, we must load with huggingFace and pass in
+    # Must run 'huggingface-cli login' first to get access to llama2 model
+    if cfg.model_name.startswith("gpt"):
+        model = transformer_lens.HookedTransformer.from_pretrained(cfg.model_name)
+    else:
+        hf_model = AutoModelForCausalLM.from_pretrained(cfg.model_name)
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
+        model = transformer_lens.HookedTransformer.from_pretrained(cfg.model_name,
+                                                                   tokenizer=tokenizer,
+                                                                   hf_model=hf_model)
 
     # Load the inputs (prompts)
-    input_path = sys.argv[1]
-    prompts_dict = csv_to_dictionary(input_path)
+    prompts_sheet = cfg.prompts_sheet
+    prompts_dict = csv_to_dictionary(prompts_sheet)
 
     # Create output directories
     experiment_base_dir, images_dir = create_output_directories()
@@ -259,14 +248,15 @@ if __name__ == "__main__":
     # Copy the config.yaml file to the output directory
     # Why? So we can see what the configuration was for a given run.
     # config.yaml will change from run to run, so we want to save it for each run.
-    shutil.copyfile("config.yaml", os.path.join(experiment_base_dir, "config.yaml"))
+    with open(os.path.join(experiment_base_dir, "config.yaml"), "w") as f:
+        OmegaConf.save(cfg, f)
 
     # Copy the specific prompts being used from inputs to outputs.
     # Why? While we are still figuring out which prompt datasets work.
     # Prompt datasets as inputs which don't work will probably be deleted over time.
     # Saving them for a specific output lets us track which prompts were used for which output.
     # We can stop doing this once we have prompts that work.
-    input_file_stem  = os.path.splitext(os.path.basename(input_path))[0]
+    input_file_stem  = os.path.splitext(os.path.basename(prompts_sheet))[0]
     prompts_output_path = os.path.join(experiment_base_dir, f"{input_file_stem}.csv")
     prompts_df = pd.DataFrame(prompts_dict)
     prompts_df.to_csv(prompts_output_path)
@@ -276,6 +266,12 @@ if __name__ == "__main__":
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
     
+    # Keeping info in memory in activations cache uses a lot of RAM with the bigger models
+    # When running this script with gpt-XL and 150 prompts, run out of memory.
+    # Only 6gb of model (1.5b parameters, float32)
+    # 40 prompts in good/evil. Takes 4 minutes, uses 18 GB of RAM
+    # TODO: Save things as we use them, don't keep everything in memory, don't
+    # keep the complete set of activations in memory (don't reload them)
     compute_activations(model, activations_cache)
     
     add_numpy_hidden_states(activations_cache)
@@ -291,9 +287,14 @@ if __name__ == "__main__":
     # relevant activation
     # Relevant when changing the model
     
-    # TODO: Create the raster plot
-    # np.digitize useful for raster plot - https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/classify-plot-raster-data-in-python/
-    # TODO: Cluster with PCS in addition to TSNE, figure out which are most simlar
+    # Activations cache takes up a lot of space, only write if user sets
+    # parameter
+    if cfg.write_cache:
+        write_activations_cache(activations_cache, experiment_base_dir)
 
-    write_activations_cache(activations_cache, experiment_base_dir)
+
+if __name__ == "__main__":
+    # Run with:
+    # >>> python3 main.py prompts_sheet="../data/inputs/prompts_honesty_integrity_compassion.xlsx" model_name="meta-llama/Llama-2-7b-hf"
+    main()
 
