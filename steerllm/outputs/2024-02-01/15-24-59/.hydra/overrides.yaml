@@ -1,0 +1,2 @@
+- prompts_sheet=../data/inputs/prompts_good_evil.xlsx
+- model_name=gpt2-XL

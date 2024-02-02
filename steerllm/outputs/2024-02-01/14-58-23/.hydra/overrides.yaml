@@ -1,0 +1,2 @@
+- prompts_sheet=../data/inputs/prompts_honesty_integrity_compassion.xlsx
+- model_name=meta-llama/Llama-2-7b-hf

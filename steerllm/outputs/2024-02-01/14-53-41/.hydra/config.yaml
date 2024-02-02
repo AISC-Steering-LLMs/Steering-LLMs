@@ -1,0 +1,3 @@
+model_name: Llama-7b-hf
+experiment_notes: Adding Hydra library for experiment configuration.
+prompts_sheet: ../data/inputs/prompts_honesty_integrity_compassion.xlsx

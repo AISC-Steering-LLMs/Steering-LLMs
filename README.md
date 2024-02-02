@@ -1,7 +1,7 @@
 # Steering-LLMs
 
 # In order to run code
-Create Python virtual environment (place where python packages are installed) with ``python3 -m venv ~/camp``. Activate the virtual environment (which may have to be done each time you run code) with ``source ~/camp/bin/activate``. Then clone the repo and run ``python -m pip install -e Steering-LLMs`` from Python virtual env. Run the code with ``python3 Steering-LLMs/steerllm/main.py Steering-LLMs/data/inputs/prompts_good_evil_justice.xlsx``. This will create a folder with the experiment results in ``Steering-LLMs/data/output``.
+Create Python virtual environment (place where python packages are installed) with ``python3 -m venv ~/camp``. Activate the virtual environment (which may have to be done each time you run code) with ``source ~/camp/bin/activate``. Then clone the repo and run ``python -m pip install -e Steering-LLMs`` from Python virtual env. Run the code with ``python3 Steering-LLMs/steerllm/main.py``. This will create a folder with the experiment results in ``Steering-LLMs/data/output``.
 
 # GitHub Basic Workflow
 Adding things to the github involves a few steps. ``Monospace sections`` are intended to be run on the commandline/terminal. I am writing this tutorial using terminal commands, but there are GUI options for github as well.
