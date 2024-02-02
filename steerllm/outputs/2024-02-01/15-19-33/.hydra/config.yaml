@@ -1,4 +1,0 @@
-model_name: gpt2-XL
-experiment_notes: Adding Hydra library for experiment configuration.
-prompts_sheet: ../data/inputs/prompts_honesty_integrity_compassion.xlsx
-use_gpu: false
