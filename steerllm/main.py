@@ -21,6 +21,7 @@ import hydra
 import shutil
 from transformers import AutoTokenizer,AutoModelForCausalLM
 
+from memory_profiler import profile
 # Constants
 # If going forward with Hydra, we put everything here
 # That really is constant betweeen runs.
@@ -38,10 +39,13 @@ SEED = 42
 matplotlib.use('TkAgg')
 
 
-# Store all relevant data for a given prompt within this class
-# Can construct progressively, assign the data as it is processed
 @dataclass
 class Activation:
+    """
+    Represents all relevant data for a given prompt, including its ethical area, 
+    positivity, raw activations, and hidden states.
+    Can construct progressively, assign the data as it is processed
+    """
     prompt: str
     ethical_area: str
     positive: bool
@@ -64,13 +68,62 @@ def csv_to_dictionary(filename: str) -> dict[str, Any]:
 
     return data
 
+def save_activations_to_disk(activation: Activation, directory: str) -> None:
+    print("Saving activations to disk")
+    """
+    Saves an Activation object's raw activations to disk.
+
+    Args:
+        activation (Activation): The Activation object to save.
+        directory (str): The directory where activations should be saved.
+
+    Returns:
+        None
+    """
+    filepath = os.path.join(directory, f"{activation.prompt[:30]}.pkl")  # Use first 30 chars to avoid long filenames
+    with open(filepath, 'wb') as f:
+        pickle.dump(activation.raw_activations, f)
+
+
+def load_activations_from_disk(prompt: str, directory: str) -> Any:
+    print("Loading activations from disk")
+
+    filepath = os.path.join(directory, f"{prompt[:30]}.pkl") # Match the saving convention
+    if os.path.exists(filepath):
+        with open(filepath, 'rb') as f:
+            return pickle.load(f)
+    else:
+        raise FileNotFoundError(f"No saved activation found for prompt: {prompt[:30]}")
+
 
 # Compute forward pass and cache data
-def compute_activations(model: Any, activations_cache: list[Activation]) -> None:
+@profile
+def compute_and_save_activations(model: Any, activations_cache: list[Activation], save_dir: str) -> None:
+    print("Computing and saving activations")
+    """
+    Computes and caches activations for each prompt in the activations_cache using the provided model.
+
+    Args:
+        model (Any): The language model used to compute activations. The model should have a 
+            `run_with_cache` method that takes a prompt and returns logits and raw activations.
+        activations_cache (list[Activation]): A list of Activation objects. Each Activation object
+            should contain a prompt for which activations need to be computed.
+
+    Returns:
+        None: The function updates the activations_cache list in place, adding raw activations to each
+            Activation object.
+    """
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     for act in activations_cache:
         # Run the model and get logits and activations
-        logits, raw_activations = model.run_with_cache(act.prompt)
+        _, raw_activations = model.run_with_cache(act.prompt)
         act.raw_activations = raw_activations
+        
+        # Incremental saving for memory optimization
+        save_activations_to_disk(act, save_dir)
+        act.raw_activations = None # Clear memory
 
 
 # Load cached data from file
@@ -83,8 +136,14 @@ def load_cache(filename: str) -> Any:
 # Add the hidden states (the weights of the model between attention/MLP blocks)
 # Use the last token
 # TODO: I am not sure if the "hidden layers" that pytorch gives for RepE are normalized or unnormalized
-def add_numpy_hidden_states(activations_cache: list[Activation]) -> None:
+@profile
+def add_numpy_hidden_states(activations_cache: list[Activation], activations_dir: str) -> None:
+    print("Adding numpy hidden states")
     for act in activations_cache:
+
+        if act.raw_activations is None:
+            act.raw_activations = load_activations_from_disk(act.prompt, activations_dir)
+
         raw_act = act.raw_activations
         for hook_name in raw_act:
             # Only get the hidden states, the last activations in the block
@@ -95,10 +154,23 @@ def add_numpy_hidden_states(activations_cache: list[Activation]) -> None:
                 # Get only the last token activations using '-1'
                 # print("numpy_activation.shape", numpy_activation.shape)
                 act.hidden_states.append(numpy_activation[0][-1])
+        
+        act.raw_activations = None # Free memory again
 
 
-# Extract the data we are actually using from the dictionary
 def populate_data(prompts_dict: dict[str, Any]) -> list[Activation]:
+    """
+    Converts a dictionary of prompts and their attributes into a list of Activation objects.
+
+    Args:
+        prompts_dict (dict[str, Any]): A dictionary where keys are column names from the CSV file 
+            (e.g., 'Prompt', 'Ethical_Area', 'Positive') and values are lists of corresponding entries.
+
+    Returns:
+        list[Activation]: A list of Activation objects. Each Activation object represents a prompt
+            and its associated data, including the ethical area and a boolean indicating whether the 
+            prompt is considered positive. The activation data itself is initialized as None.
+    """
     activations_cache = []
     for prompt, ethical_area, positive in zip(prompts_dict[PROMPT_COLUMN],
                                               prompts_dict[ETHICAL_AREA_COLUMN],
@@ -201,11 +273,12 @@ def create_output_directories() -> tuple[str, str]:
 
     experiment_base_dir = os.path.join(DATA_PATH, "outputs", current_datetime)
     images_dir = os.path.join(experiment_base_dir, 'images')
+    raw_activations_dir = os.path.join(experiment_base_dir, "raw_activations")
 
     os.makedirs(experiment_base_dir)
     os.makedirs(images_dir)
 
-    return experiment_base_dir, images_dir
+    return experiment_base_dir, images_dir, raw_activations_dir
 
 
 # Write cache data
@@ -243,7 +316,7 @@ def main(cfg: DictConfig) -> None:
     prompts_dict = csv_to_dictionary(prompts_sheet)
 
     # Create output directories
-    experiment_base_dir, images_dir = create_output_directories()
+    experiment_base_dir, images_dir, raw_activations_dir = create_output_directories()
 
     # Copy the config.yaml file to the output directory
     # Why? So we can see what the configuration was for a given run.
@@ -272,7 +345,7 @@ def main(cfg: DictConfig) -> None:
     # 40 prompts in good/evil. Takes 4 minutes, uses 18 GB of RAM
     # TODO: Save things as we use them, don't keep everything in memory, don't
     # keep the complete set of activations in memory (don't reload them)
-    compute_activations(model, activations_cache)
+    compute_and_save_activations(model, activations_cache, raw_activations_dir)
     
     add_numpy_hidden_states(activations_cache)
     
