@@ -1,0 +1,17 @@
+           # Note the use of "average=weighted". This calculates the metric from the
+            # perspective of each class, weights them by the number of true instances
+            # of that class in the data, sums the scores, and then divides by the
+            # total number of instances. This is useful when you have class imbalance
+            # which we don't really have here because of how we balance the prompts
+            # and so might be overkill.
+            # Also note the use of "zero_division=0" which deals with zero denominator issues.
+            # In the case of precision, this means that true positive + false positive = 0
+            # because no instances were predicted for a the positive class, suggesting a
+            # poor classifier. In setting zero_division=0, precision is set to 0 when undefined.
+            # You're assuming that all the instances that were not predicted for a
+            # certain class would have been incorrectly classified if they had been predicted eg
+            # no true positives. This is pessimistic but seems right for a poor classifier.
+            # Setting zero_division=1 sets precision to 1 when undefined.
+            # You're assuming that all the instances that were not predicted for a
+            # certain class would have been correctly classified if they had been predicted eg
+            # no false positives. This is a more optimistic and inflates the precision.
