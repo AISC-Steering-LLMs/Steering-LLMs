@@ -29,6 +29,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 import plotly.graph_objects as go
+import plotly.io as pio
 
 
 
@@ -283,8 +284,13 @@ def classifier_battery(embedded_data_dict, labels, metrics_dir) -> None:
             metrics_dict["F1 Score"].append(f1)
 
             # Plot decision boundary
-            x_min, x_max = X_train[:, 0].min() - 1, X_train[:, 0].max() + 1
-            y_min, y_max = X_train[:, 1].min() - 1, X_train[:, 1].max() + 1
+            # Note I am going to do the decision boundary plots
+            # for the entire dataset (representations), not just the test set
+            # because I want to to be able to look at all the data (prompts)
+            # to get a sense of which ones are being classified incorrectly
+            # with this boundary.
+            x_min, x_max = representations[:, 0].min() - 1, representations[:, 0].max() + 1
+            y_min, y_max = representations[:, 1].min() - 1, representations[:, 1].max() + 1
             xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
                                 np.arange(y_min, y_max, 0.1))
 
@@ -295,29 +301,45 @@ def classifier_battery(embedded_data_dict, labels, metrics_dir) -> None:
                 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
 
-            # print(type(Z))
-            # print(np.unique(Z))
-            # print(Z.shape)
-            # print(type(xx))
-            # print(xx.shape)
-            # print(type(yy))
-            # print(yy.shape)
-            # print(" ")
-
             color_map = {'Bad False': 'red', 'Good True': 'green'}  # Define your own color mapping
-            colors = [color_map[label] for label in y_train]  # Map labels to colors
+            colors = [color_map[label] for label in labels]  # Map labels to colors
 
+            # *****************
+            # MATPOLIB PLOTTING
+            # *****************
+
+            # This code plots a continuum of decision boundaries
             # plt.contourf(xx, yy, Z, alpha=0.4)
-            # plt.scatter(X_train[:, 0], X_train[:, 1], c=colors, s=20, edgecolor='k')
+            # plt.scatter(representations[:, 0], representations[:, 1], c=colors, s=20, edgecolor='k')
 
+            # This code plots a single decision boundary for the 0.5 threshold
             plt.contour(xx, yy, Z, levels=[0.5], colors='black')
-            plt.scatter(X_train[:, 0], X_train[:, 1], c=colors, edgecolors='k')
+            plt.scatter(representations[:, 0], representations[:, 1], c=colors, edgecolors='k')
 
             plt.title('Decision boundary for ' + name)
             plt.xlabel('Feature 1')
             plt.ylabel('Feature 2')
             plt.savefig(metrics_dir + "/decision_boundary_" + name + "_" + str(layer) + ".png")
             plt.close()
+
+            # ***************
+            # PLOTLY PLOTTING
+            # ***************
+
+            # Create the figure
+            fig = go.Figure(data=[
+                go.Contour(x=xx[0], y=yy[:, 0], z=Z, contours=dict(start=0.5, end=0.5, size=1), line_width=2, showscale=False),
+                go.Scatter(x=representations[:, 0], y=representations[:, 1], mode='markers', marker=dict(size=8, color=colors), text=labels, hoverinfo='text')
+            ])
+
+            # Set the title and axis labels
+            fig.update_layout(
+                title='Decision boundary for ' + name,
+                xaxis_title='Feature 1',
+                yaxis_title='Feature 2'
+            )
+
+            pio.write_html(fig, metrics_dir + "/decision_boundary_" + name + "_" + str(layer) + ".html")
 
         metrics_df = pd.DataFrame(metrics_dict)
         metrics_df.to_csv(metrics_dir + "/metrics_"+ name +'.csv', index=False)
@@ -363,7 +385,7 @@ def main(cfg: DictConfig) -> None:
     prompts_df = pd.DataFrame(prompts_dict)
     prompts_df.to_csv(prompts_output_path)
 
-    activations_cache  = populate_data(prompts_dict)
+    activations_cache = populate_data(prompts_dict)
 
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
