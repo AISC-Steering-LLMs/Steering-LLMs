@@ -21,6 +21,15 @@ import hydra
 import shutil
 from transformers import AutoTokenizer,AutoModelForCausalLM
 
+from sklearn.random_projection import johnson_lindenstrauss_min_dim
+from sklearn import cluster
+
+# Decision Tree
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report
+from sklearn import tree
+
 # Constants
 # If going forward with Hydra, we put everything here
 # That really is constant betweeen runs.
@@ -193,6 +202,69 @@ def raster_plot(activations_cache: list[Activation],
 
         plt.close()
 
+def random_projections_plot(activations_cache: list[Activation], images_dir: str) -> None:
+    
+    for layer in range(len(activations_cache[0].hidden_states)):
+    
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+
+        """
+        Note that the number of dimensions is independent of the original number of features 
+        but instead depends on the size of the dataset: the larger the dataset, 
+        the higher is the minimal dimensionality of an eps-embedding.
+        """
+        min_dim = johnson_lindenstrauss_min_dim(len(data), eps=0.1)
+        # TODO: Would want to log this to hydra if useful
+        print(f"Dataset size is {len(data)} and minimum embedding dimension suggested is {min_dim}")
+        # No plot visualized here yet. Not sure if useful.
+
+
+# Hierarchical Clustering
+def feature_agglomeration(activations_cache: list[Activation], images_dir: str) -> None:
+
+    for layer in range(len(activations_cache[0].hidden_states)):
+
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+
+        agglo = cluster.FeatureAgglomeration(n_clusters=2)
+        projected_data = agglo.fit_transform(data)
+
+        df = pd.DataFrame(projected_data, columns=["X", "Y"])
+        df["Ethical Area"] = labels
+        ax = sns.scatterplot(x='X', y='Y', hue='Ethical Area', data=df)
+
+        plot_path = os.path.join(images_dir, f"hier_clustering_layer_{layer}.png")
+        plt.savefig(plot_path)
+        plt.close()
+
+def probe_hidden_states(activations_cache: list[Activation], images_dir: str) -> None:
+
+    for layer in range(len(activations_cache[0].hidden_states)):
+
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        unique_labels = sorted(list(set(labels)))
+
+        X_train, X_test, y_train, y_test = train_test_split(data, labels, random_state=SEED)
+
+        clf = DecisionTreeClassifier(random_state=SEED)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+
+        # TODO: Would want to log to hydra if useful
+        print("Classification Report:\n", classification_report(y_test, y_pred))
+
+        # Visualize the decision tree
+        plt.figure(figsize=(20, 10))
+        tree.plot_tree(clf, filled=True, class_names=unique_labels)
+        plt.title("Decision tree for probing task")
+
+        plot_path = os.path.join(images_dir, f"decision_tree_probe_layer_{layer}.png")
+        plt.savefig(plot_path)
+        plt.close()
+
 
 # Initialize output directory with timestamp
 def create_output_directories() -> tuple[str, str]:
@@ -293,6 +365,9 @@ def main(cfg: DictConfig) -> None:
     # tsne_plot(activations_cache, images_dir)
     # pca_plot(activations_cache, images_dir)
     raster_plot(activations_cache, images_dir)
+    random_projections_plot(activations_cache, images_dir)
+    feature_agglomeration(activations_cache, images_dir)
+    probe_hidden_states(activations_cache, images_dir)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
