@@ -21,7 +21,6 @@ import hydra
 import shutil
 from transformers import AutoTokenizer,AutoModelForCausalLM
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -32,6 +31,14 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 
+from sklearn.random_projection import johnson_lindenstrauss_min_dim
+from sklearn import cluster
+
+# Decision Tree
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report
+from sklearn import tree
 
 # Constants
 # If going forward with Hydra, we put everything here
@@ -211,8 +218,72 @@ def raster_plot(activations_cache: list[Activation],
                    wrap=True)
 
         plot_path = os.path.join(images_dir, f"raster_plot_layer_{layer}.svg")
+        print(plot_path)
         plt.savefig(plot_path)
 
+        plt.close()
+
+def random_projections_plot(activations_cache: list[Activation], images_dir: str) -> None:
+    
+    for layer in range(len(activations_cache[0].hidden_states)):
+    
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+
+        """
+        Note that the number of dimensions is independent of the original number of features 
+        but instead depends on the size of the dataset: the larger the dataset, 
+        the higher is the minimal dimensionality of an eps-embedding.
+        """
+        min_dim = johnson_lindenstrauss_min_dim(len(data), eps=0.1)
+        # TODO: Would want to log this to hydra if useful
+        print(f"Dataset size is {len(data)} and minimum embedding dimension suggested is {min_dim}")
+        # No plot visualized here yet. Not sure if useful.
+
+
+# Hierarchical Clustering
+def feature_agglomeration(activations_cache: list[Activation], images_dir: str) -> None:
+
+    for layer in range(len(activations_cache[0].hidden_states)):
+
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+
+        agglo = cluster.FeatureAgglomeration(n_clusters=2)
+        projected_data = agglo.fit_transform(data)
+
+        df = pd.DataFrame(projected_data, columns=["X", "Y"])
+        df["Ethical Area"] = labels
+        ax = sns.scatterplot(x='X', y='Y', hue='Ethical Area', data=df)
+
+        plot_path = os.path.join(images_dir, f"hier_clustering_layer_{layer}.png")
+        plt.savefig(plot_path)
+        plt.close()
+
+def probe_hidden_states(activations_cache: list[Activation], images_dir: str) -> None:
+
+    for layer in range(len(activations_cache[0].hidden_states)):
+
+        data = np.stack([act.hidden_states[layer] for act in activations_cache])
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        unique_labels = sorted(list(set(labels)))
+
+        X_train, X_test, y_train, y_test = train_test_split(data, labels, random_state=SEED)
+
+        clf = DecisionTreeClassifier(random_state=SEED)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+
+        # TODO: Would want to log to hydra if useful
+        print("Classification Report:\n", classification_report(y_test, y_pred))
+
+        # Visualize the decision tree
+        plt.figure(figsize=(20, 10))
+        tree.plot_tree(clf, filled=True, class_names=unique_labels)
+        plt.title("Decision tree for probing task")
+
+        plot_path = os.path.join(images_dir, f"decision_tree_probe_layer_{layer}.png")
+        plt.savefig(plot_path)
         plt.close()
 
 
@@ -240,10 +311,13 @@ def write_activations_cache(activations_cache: Any, experiment_base_dir: str) ->
         pickle.dump(activations_cache, f)
 
 
-# Write experiment parameters
-def write_experiement_parameters(experiment_params: dict, experiment_base_dir: str) -> None:
-    with open(os.path.join(experiment_base_dir, "experiment_parameters.json"), 'w') as f:
-        json.dump(experiment_params, f)
+# Save configurations and prompts
+def write_experiment_parameters(cfg: DictConfig, prompts_dict: dict, experiment_base_dir: str) -> None:
+    # --- cfg parameters
+    with open(os.path.join(experiment_base_dir, "config.yaml"), 'w') as f:
+        OmegaConf.save(cfg, f)
+    # --- prompts
+    copy_prompts_to_output(prompts_dict, cfg.prompts_sheet, experiment_base_dir)
 
 
 def classifier_battery(embedded_data_dict, labels, prompts, metrics_dir) -> None:
@@ -348,11 +422,11 @@ def classifier_battery(embedded_data_dict, labels, prompts, metrics_dir) -> None
         metrics_df.to_csv(metrics_dir + "/metrics_"+ name +'.csv', index=False)
 
 
-@hydra.main(version_base=None, config_path=".", config_name="config")
-def main(cfg: DictConfig) -> None:  
+def load_model(cfg):
+
     if not cfg.use_gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    # Load the model
+
     # ie gpt2-small, gpt2-XL, meta-llama/Llama-2-7b-hf, meta-llama/Llama-2-7b-chat-hf
     # For llama2, we must load with huggingFace and pass in
     # Must run 'huggingface-cli login' first to get access to llama2 model
@@ -364,31 +438,41 @@ def main(cfg: DictConfig) -> None:
         model = transformer_lens.HookedTransformer.from_pretrained(cfg.model_name,
                                                                    tokenizer=tokenizer,
                                                                    hf_model=hf_model)
+    return model
 
-    # Load the inputs (prompts)
-    prompts_sheet = cfg.prompts_sheet
-    prompts_dict = csv_to_dictionary(prompts_sheet)
 
-    # Create output directories
-    experiment_base_dir, images_dir, metrics_dir = create_output_directories()
-
-    # Copy the config.yaml file to the output directory
-    # Why? So we can see what the configuration was for a given run.
-    # config.yaml will change from run to run, so we want to save it for each run.
-    with open(os.path.join(experiment_base_dir, "config.yaml"), "w") as f:
-        OmegaConf.save(cfg, f)
-
+def copy_prompts_to_output(prompts_dict, prompts_sheet, experiment_base_dir):
     # Copy the specific prompts being used from inputs to outputs.
     # Why? While we are still figuring out which prompt datasets work.
     # Prompt datasets as inputs which don't work will probably be deleted over time.
     # Saving them for a specific output lets us track which prompts were used for which output.
     # We can stop doing this once we have prompts that work.
+
     input_file_stem  = os.path.splitext(os.path.basename(prompts_sheet))[0]
     prompts_output_path = os.path.join(experiment_base_dir, f"{input_file_stem}.csv")
     prompts_df = pd.DataFrame(prompts_dict)
     prompts_df.to_csv(prompts_output_path)
 
-    activations_cache = populate_data(prompts_dict)
+    
+
+@hydra.main(version_base=None, config_path=".", config_name="config")
+def main(cfg: DictConfig) -> None:  
+    
+    # Load the model
+    model = load_model(cfg)
+
+    # Load the inputs (prompts)
+    prompts_dict =  csv_to_dictionary(cfg.prompts_sheet)
+
+    # Create output directories
+    experiment_base_dir, images_dir, metrics_dir = create_output_directories()
+
+    # Copy the config.yaml file to the output directory and the prompts
+    # Why? So we can see what the configuration was for a given run.
+    # config.yaml will change from run to run, so we want to save it for each run.
+    write_experiment_parameters(cfg, prompts_dict, experiment_base_dir)
+
+    activations_cache  = populate_data(prompts_dict)
 
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
@@ -407,6 +491,9 @@ def main(cfg: DictConfig) -> None:
     tsne_embedded_data_dict, labels, prompts = tsne_plot(activations_cache, images_dir)
     pca_plot(activations_cache, images_dir)
     raster_plot(activations_cache, images_dir)
+    random_projections_plot(activations_cache, images_dir)
+    feature_agglomeration(activations_cache, images_dir)
+    probe_hidden_states(activations_cache, images_dir)
 
     # See if the representations can be used to classify the ethical area
     # Why are we actually doing this? Hypothesis - better seperation of ethical areas
