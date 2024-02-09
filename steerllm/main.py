@@ -188,6 +188,7 @@ def raster_plot(activations_cache: list[Activation],
                    wrap=True)
 
         plot_path = os.path.join(images_dir, f"raster_plot_layer_{layer}.svg")
+        print(plot_path)
         plt.savefig(plot_path)
 
         plt.close()
@@ -215,17 +216,20 @@ def write_activations_cache(activations_cache: Any, experiment_base_dir: str) ->
         pickle.dump(activations_cache, f)
 
 
-# Write experiment parameters
-def write_experiement_parameters(experiment_params: dict, experiment_base_dir: str) -> None:
-    with open(os.path.join(experiment_base_dir, "experiment_parameters.json"), 'w') as f:
-        json.dump(experiment_params, f)
+# Save configurations and prompts
+def write_experiment_parameters(cfg: DictConfig, prompts_dict: dict, experiment_base_dir: str) -> None:
+    # --- cfg parameters
+    with open(os.path.join(experiment_base_dir, "config.yaml"), 'w') as f:
+        OmegaConf.save(cfg, f)
+    # --- prompts
+    copy_prompts_to_output(prompts_dict, cfg.prompts_sheet, experiment_base_dir)
 
 
-@hydra.main(version_base=None, config_path=".", config_name="config")
-def main(cfg: DictConfig) -> None:  
+def load_model(cfg):
+
     if not cfg.use_gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    # Load the model
+
     # ie gpt2-small, gpt2-XL, meta-llama/Llama-2-7b-hf, meta-llama/Llama-2-7b-chat-hf
     # For llama2, we must load with huggingFace and pass in
     # Must run 'huggingface-cli login' first to get access to llama2 model
@@ -237,29 +241,39 @@ def main(cfg: DictConfig) -> None:
         model = transformer_lens.HookedTransformer.from_pretrained(cfg.model_name,
                                                                    tokenizer=tokenizer,
                                                                    hf_model=hf_model)
+    return model
 
-    # Load the inputs (prompts)
-    prompts_sheet = cfg.prompts_sheet
-    prompts_dict = csv_to_dictionary(prompts_sheet)
 
-    # Create output directories
-    experiment_base_dir, images_dir = create_output_directories()
-
-    # Copy the config.yaml file to the output directory
-    # Why? So we can see what the configuration was for a given run.
-    # config.yaml will change from run to run, so we want to save it for each run.
-    with open(os.path.join(experiment_base_dir, "config.yaml"), "w") as f:
-        OmegaConf.save(cfg, f)
-
+def copy_prompts_to_output(prompts_dict, prompts_sheet, experiment_base_dir):
     # Copy the specific prompts being used from inputs to outputs.
     # Why? While we are still figuring out which prompt datasets work.
     # Prompt datasets as inputs which don't work will probably be deleted over time.
     # Saving them for a specific output lets us track which prompts were used for which output.
     # We can stop doing this once we have prompts that work.
+
     input_file_stem  = os.path.splitext(os.path.basename(prompts_sheet))[0]
     prompts_output_path = os.path.join(experiment_base_dir, f"{input_file_stem}.csv")
     prompts_df = pd.DataFrame(prompts_dict)
     prompts_df.to_csv(prompts_output_path)
+
+    
+
+@hydra.main(version_base=None, config_path=".", config_name="config")
+def main(cfg: DictConfig) -> None:  
+    
+    # Load the model
+    model = load_model(cfg)
+
+    # Load the inputs (prompts)
+    prompts_dict =  csv_to_dictionary(cfg.prompts_sheet)
+
+    # Create output directories
+    experiment_base_dir, images_dir = create_output_directories()
+
+    # Copy the config.yaml file to the output directory and the prompts
+    # Why? So we can see what the configuration was for a given run.
+    # config.yaml will change from run to run, so we want to save it for each run.
+    write_experiment_parameters(cfg, prompts_dict, experiment_base_dir)
 
     activations_cache  = populate_data(prompts_dict)
 
@@ -276,8 +290,8 @@ def main(cfg: DictConfig) -> None:
     
     add_numpy_hidden_states(activations_cache)
     
-    tsne_plot(activations_cache, images_dir)
-    pca_plot(activations_cache, images_dir)
+    # tsne_plot(activations_cache, images_dir)
+    # pca_plot(activations_cache, images_dir)
     raster_plot(activations_cache, images_dir)
 
     # Each transformer component has a HookPoint for every activation, which
