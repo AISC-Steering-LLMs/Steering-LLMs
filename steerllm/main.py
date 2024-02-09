@@ -136,6 +136,7 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
         data = np.stack([act.hidden_states[layer] for act in activations_cache])
         labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        prompts = [act.prompt for act in activations_cache]
 
         # print("data.shape", data.shape)
 
@@ -153,7 +154,7 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
         plt.close()
 
-    return embedded_data_dict, labels
+    return embedded_data_dict, labels, prompts
 
   
 
@@ -245,7 +246,7 @@ def write_experiement_parameters(experiment_params: dict, experiment_base_dir: s
         json.dump(experiment_params, f)
 
 
-def classifier_battery(embedded_data_dict, labels, metrics_dir) -> None:
+def classifier_battery(embedded_data_dict, labels, prompts, metrics_dir) -> None:
 
     # Define classifiers
     classifiers = {
@@ -326,10 +327,12 @@ def classifier_battery(embedded_data_dict, labels, metrics_dir) -> None:
             # PLOTLY PLOTTING
             # ***************
 
+            hover_text = [f'Prompt: {prompt}<br>Label: {label}' for prompt, label in zip(prompts, labels)]
+
             # Create the figure
             fig = go.Figure(data=[
                 go.Contour(x=xx[0], y=yy[:, 0], z=Z, contours=dict(start=0.5, end=0.5, size=1), line_width=2, showscale=False),
-                go.Scatter(x=representations[:, 0], y=representations[:, 1], mode='markers', marker=dict(size=8, color=colors), text=labels, hoverinfo='text')
+                go.Scatter(x=representations[:, 0], y=representations[:, 1], mode='markers', marker=dict(size=8, color=colors), text=hover_text, hoverinfo='text')
             ])
 
             # Set the title and axis labels
@@ -401,14 +404,14 @@ def main(cfg: DictConfig) -> None:
     add_numpy_hidden_states(activations_cache)
     
     # Get various representations for each layer
-    tsne_embedded_data_dict, labels = tsne_plot(activations_cache, images_dir)
+    tsne_embedded_data_dict, labels, prompts = tsne_plot(activations_cache, images_dir)
     pca_plot(activations_cache, images_dir)
     raster_plot(activations_cache, images_dir)
 
     # See if the representations can be used to classify the ethical area
     # Why are we actually doing this? Hypothesis - better seperation of ethical areas
     # Leads to better steering vectors. This actually needs to be tested.
-    classifier_battery(tsne_embedded_data_dict, labels, metrics_dir)
+    classifier_battery(tsne_embedded_data_dict, labels, prompts, metrics_dir)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
