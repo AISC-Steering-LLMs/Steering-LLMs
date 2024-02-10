@@ -1,0 +1,5 @@
+model_name: gpt2-small
+experiment_notes: Trying Eleni honesty contrastive with because.
+prompts_sheet: ../data/inputs/honesty_contrastive_formatted_final.csv
+use_gpu: false
+write_cache: false

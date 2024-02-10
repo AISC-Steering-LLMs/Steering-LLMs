@@ -1,0 +1,5 @@
+model_name: gpt2-small
+experiment_notes: Trying Eleni first set of prompts without because.
+prompts_sheet: ../data/inputs/good_bad_interactive_no_because.csv
+use_gpu: false
+write_cache: false

@@ -20,6 +20,16 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 import shutil
 from transformers import AutoTokenizer,AutoModelForCausalLM
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.model_selection import train_test_split
+import plotly.graph_objects as go
+import plotly.io as pio
+
 
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn import cluster
@@ -120,6 +130,10 @@ def populate_data(prompts_dict: dict[str, Any]) -> list[Activation]:
 # Make tsne plot for hidden state of every layer
 def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
+    # Dictionary to store the embedded data for each layer
+    # Key: layer number, Value: embedded data
+    # Will be used for classification in the function classifier_battery
+    embedded_data_dict = {}
 
     # Using activations_cache[0] is arbitrary as they all have the same number of layers
     # (12 with GPT-2-small) with representations
@@ -129,11 +143,14 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
 
         data = np.stack([act.hidden_states[layer] for act in activations_cache])
         labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        prompts = [act.prompt for act in activations_cache]
 
         # print("data.shape", data.shape)
 
         tsne = TSNE(n_components=2, random_state=SEED)
         embedded_data = tsne.fit_transform(data)
+
+        embedded_data_dict[layer] = embedded_data
         
         df = pd.DataFrame(embedded_data, columns=["X", "Y"])
         df["Ethical Area"] = labels
@@ -143,6 +160,10 @@ def tsne_plot(activations_cache: list[Activation], images_dir: str) -> None:
         plt.savefig(plot_path)
 
         plt.close()
+
+    return embedded_data_dict, labels, prompts
+
+  
 
 
 
@@ -274,11 +295,13 @@ def create_output_directories() -> tuple[str, str]:
 
     experiment_base_dir = os.path.join(DATA_PATH, "outputs", current_datetime)
     images_dir = os.path.join(experiment_base_dir, 'images')
+    metrics_dir = os.path.join(experiment_base_dir, 'metrics')
 
     os.makedirs(experiment_base_dir)
     os.makedirs(images_dir)
+    os.makedirs(metrics_dir)
 
-    return experiment_base_dir, images_dir
+    return experiment_base_dir, images_dir, metrics_dir
 
 
 # Write cache data
@@ -295,6 +318,108 @@ def write_experiment_parameters(cfg: DictConfig, prompts_dict: dict, experiment_
         OmegaConf.save(cfg, f)
     # --- prompts
     copy_prompts_to_output(prompts_dict, cfg.prompts_sheet, experiment_base_dir)
+
+
+def classifier_battery(embedded_data_dict, labels, prompts, metrics_dir) -> None:
+
+    # Define classifiers
+    classifiers = {
+        "logistic_regression": LogisticRegression(),
+        "decision_tree": DecisionTreeClassifier(),
+        "random_forest": RandomForestClassifier(),
+        "svc": SVC(probability=True),
+        "knn": KNeighborsClassifier(),
+        "gradient_boosting": GradientBoostingClassifier()
+    }
+
+    for name, clf in classifiers.items():
+
+        print(name)
+
+        metrics_dict = {"Layer": [], "Accuracy": [], "Precision": [], "Recall": [], "F1 Score": []}
+
+        for layer, representations in embedded_data_dict.items():
+            print(layer)
+            # random_state is set to 42 for reproducibility
+            # the same train-test split is used for all classifiers
+            X_train, X_test, y_train, y_test = train_test_split(representations, labels, test_size=0.2, random_state=42)
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+
+            accuracy = accuracy_score(y_test, y_pred)
+            precision = precision_score(y_test, y_pred, average='weighted', zero_division=0)
+            recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)
+            f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
+            # confusion = confusion_matrix(y_test, y_pred)
+
+            metrics_dict["Layer"].append(layer)
+            metrics_dict["Accuracy"].append(accuracy)
+            metrics_dict["Precision"].append(precision)
+            metrics_dict["Recall"].append(recall)
+            metrics_dict["F1 Score"].append(f1)
+
+            # Plot decision boundary
+            # Note I am going to do the decision boundary plots
+            # for the entire dataset (representations), not just the test set
+            # because I want to to be able to look at all the data (prompts)
+            # to get a sense of which ones are being classified incorrectly
+            # with this boundary.
+            x_min, x_max = representations[:, 0].min() - 1, representations[:, 0].max() + 1
+            y_min, y_max = representations[:, 1].min() - 1, representations[:, 1].max() + 1
+            xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                                np.arange(y_min, y_max, 0.1))
+
+            # Predict probabilities, if possible
+            if hasattr(clf, "predict_proba"):
+                Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+            else:
+                Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+            Z = Z.reshape(xx.shape)
+
+            color_map = {'Bad False': 'red', 'Good True': 'green'}  # Define your own color mapping
+            colors = [color_map[label] for label in labels]  # Map labels to colors
+
+            # *****************
+            # MATPOLIB PLOTTING
+            # *****************
+
+            # This code plots a continuum of decision boundaries
+            # plt.contourf(xx, yy, Z, alpha=0.4)
+            # plt.scatter(representations[:, 0], representations[:, 1], c=colors, s=20, edgecolor='k')
+
+            # This code plots a single decision boundary for the 0.5 threshold
+            plt.contour(xx, yy, Z, levels=[0.5], colors='black')
+            plt.scatter(representations[:, 0], representations[:, 1], c=colors, edgecolors='k')
+
+            plt.title('Decision boundary for ' + name)
+            plt.xlabel('Feature 1')
+            plt.ylabel('Feature 2')
+            plt.savefig(metrics_dir + "/decision_boundary_" + name + "_" + str(layer) + ".png")
+            plt.close()
+
+            # ***************
+            # PLOTLY PLOTTING
+            # ***************
+
+            hover_text = [f'Prompt: {prompt}<br>Label: {label}' for prompt, label in zip(prompts, labels)]
+
+            # Create the figure
+            fig = go.Figure(data=[
+                go.Contour(x=xx[0], y=yy[:, 0], z=Z, contours=dict(start=0.5, end=0.5, size=1), line_width=2, showscale=False),
+                go.Scatter(x=representations[:, 0], y=representations[:, 1], mode='markers', marker=dict(size=8, color=colors), text=hover_text, hoverinfo='text')
+            ])
+
+            # Set the title and axis labels
+            fig.update_layout(
+                title='Decision boundary for ' + name,
+                xaxis_title='Feature 1',
+                yaxis_title='Feature 2'
+            )
+
+            pio.write_html(fig, metrics_dir + "/decision_boundary_" + name + "_" + str(layer) + ".html")
+
+        metrics_df = pd.DataFrame(metrics_dict)
+        metrics_df.to_csv(metrics_dir + "/metrics_"+ name +'.csv', index=False)
 
 
 def load_model(cfg):
@@ -340,7 +465,7 @@ def main(cfg: DictConfig) -> None:
     prompts_dict =  csv_to_dictionary(cfg.prompts_sheet)
 
     # Create output directories
-    experiment_base_dir, images_dir = create_output_directories()
+    experiment_base_dir, images_dir, metrics_dir = create_output_directories()
 
     # Copy the config.yaml file to the output directory and the prompts
     # Why? So we can see what the configuration was for a given run.
@@ -362,12 +487,18 @@ def main(cfg: DictConfig) -> None:
     
     add_numpy_hidden_states(activations_cache)
     
-    # tsne_plot(activations_cache, images_dir)
-    # pca_plot(activations_cache, images_dir)
+    # Get various representations for each layer
+    tsne_embedded_data_dict, labels, prompts = tsne_plot(activations_cache, images_dir)
+    pca_plot(activations_cache, images_dir)
     raster_plot(activations_cache, images_dir)
     random_projections_plot(activations_cache, images_dir)
     feature_agglomeration(activations_cache, images_dir)
     probe_hidden_states(activations_cache, images_dir)
+
+    # See if the representations can be used to classify the ethical area
+    # Why are we actually doing this? Hypothesis - better seperation of ethical areas
+    # Leads to better steering vectors. This actually needs to be tested.
+    classifier_battery(tsne_embedded_data_dict, labels, prompts, metrics_dir)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
@@ -380,6 +511,7 @@ def main(cfg: DictConfig) -> None:
     # parameter
     if cfg.write_cache:
         write_activations_cache(activations_cache, experiment_base_dir)
+
 
 
 if __name__ == "__main__":
