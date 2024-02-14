@@ -48,7 +48,7 @@ class AnalysisManager:
         # (12 with GPT-2-small) with representations
         labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
         prompts = [act.prompt for act in activations_cache]
-        for layer in range(len(activations_cache[0].hidden_states)):
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing T-SNE Plots"):
             
             # print(f"layer {layer}")
 
