@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import transformer_lens
-
+from tqdm import tqdm
 from omegaconf import DictConfig
 from typing import Any
 
@@ -29,10 +29,11 @@ class ModelHandler:
                                                                        hf_model=hf_model)
         return model
 
-    def compute_activations(model: Any, activations_cache: list[Activation]) -> None:
-        for act in activations_cache:
+
+    def compute_activations(self, activations_cache: list[Activation]) -> None:
+        for act in tqdm(activations_cache, desc="Computing activations"):
             # Run the model and get activations for each layer
-            _, raw_activations = model.run_with_cache(act.prompt)
+            _, raw_activations = self.model.run_with_cache(act.prompt)
             # Filter to only keep the residual stream outputs after each layer
             filtered_activations = {k: v for k, v in raw_activations.items() if "hook_resid_post" in k}
             act.raw_activations = filtered_activations
