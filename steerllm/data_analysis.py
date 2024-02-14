@@ -45,13 +45,13 @@ class AnalysisManager:
 
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
         # (12 with GPT-2-small) with representations
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        prompts = [act.prompt for act in activations_cache]
         for layer in range(len(activations_cache[0].hidden_states)):
             
             # print(f"layer {layer}")
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-            prompts = [act.prompt for act in activations_cache]
 
             # print("data.shape", data.shape)
 
