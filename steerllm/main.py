@@ -28,29 +28,15 @@ matplotlib.use('TkAgg')
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(cfg: DictConfig) -> None:  
     
+    # Create a model handler
+    # Instaitiate the model handler will load the model
     model_handler = ModelHandler(cfg)
-
-    # Load the model
-    model = model_handler.load_model()
-
-    # # Load the inputs (prompts)
-    # prompts_dict =  csv_to_dictionary(cfg.prompts_sheet)
-
-    # # Create output directories
-    # experiment_base_dir, images_dir, metrics_dir = create_output_directories()
-
-    # # Copy the config.yaml file to the output directory and the prompts
-    # # Why? So we can see what the configuration was for a given run.
-    # # config.yaml will change from run to run, so we want to save it for each run.
-    # write_experiment_parameters(cfg, prompts_dict, experiment_base_dir)
-
-    # activations_cache  = populate_data(prompts_dict)
 
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
 
     # Load the inputs (prompts)
-    prompts_dict =  data_handler.csv_to_dictionary(cfg.prompts_sheet)
+    prompts_dict = data_handler.csv_to_dictionary(cfg.prompts_sheet)
 
     # Create output directories
     experiment_base_dir, images_dir, metrics_dir = data_handler.create_output_directories()
@@ -75,8 +61,6 @@ def main(cfg: DictConfig) -> None:
     
     model_handler.add_numpy_hidden_states(activations_cache)
     
-
-
     analysis_manager = AnalysisManager(images_dir=images_dir, seed=SEED)
 
     # Get various representations for each layer
