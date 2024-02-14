@@ -12,7 +12,7 @@ class Activation:
     ethical_area: str
     positive: bool
     raw_activations: Any = None
-    hidden_states: List[np.ndarray] = []
+    hidden_states: List[np.ndarray] = None
 
 class DataHandler:
 
