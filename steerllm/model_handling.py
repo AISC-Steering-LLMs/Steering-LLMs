@@ -29,11 +29,13 @@ class ModelHandler:
                                                                        hf_model=hf_model)
         return model
 
-    def compute_activations(self, activations_cache: list[Activation]):
-        """Compute forward pass and cache data for each activation in the list."""
+    def compute_activations(model: Any, activations_cache: list[Activation]) -> None:
         for act in activations_cache:
-            logits, raw_activations = self.model.run_with_cache(act.prompt)
-            act.raw_activations = raw_activations
+            # Run the model and get activations for each layer
+            _, raw_activations = model.run_with_cache(act.prompt)
+            # Filter to only keep the residual stream outputs after each layer
+            filtered_activations = {k: v for k, v in raw_activations.items() if "hook_resid_post" in k}
+            act.raw_activations = filtered_activations
 
     def add_numpy_hidden_states(self, activations_cache: list[Activation]):
         """Add the hidden states (the weights of the model between attention/MLP blocks)."""
