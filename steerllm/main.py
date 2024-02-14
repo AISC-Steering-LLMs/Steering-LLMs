@@ -9,6 +9,9 @@ from data_handler import DataHandler
 from data_analysis import AnalysisManager
 from model_handling import ModelHandler
 
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+
 
 # Constants
 # If going forward with Hydra, we put everything here
@@ -64,17 +67,21 @@ def main(cfg: DictConfig) -> None:
     analysis_manager = AnalysisManager(images_dir=images_dir, seed=SEED)
 
     # Get various representations for each layer
-    tsne_embedded_data_dict, labels, prompts = analysis_manager.tsne_plot(activations_cache=activations_cache)
-    analysis_manager.pca_plot(activations_cache)
-    analysis_manager.raster_plot(activations_cache)
-    analysis_manager.random_projections_plot(activations_cache)
-    analysis_manager.feature_agglomeration(activations_cache)
-    analysis_manager.probe_hidden_states(activations_cache)
+    tsne_model = TSNE(n_components=2, random_state=42)
+    tsne_embedded_data_dict, tsne_labels, tsne_prompts = analysis_manager.plot_embeddings(activations_cache, tsne_model)
+    
+
+    pca_model = PCA(n_components=2, random_state=42)
+    pca_embedded_data_dict, labels, prompts = analysis_manager.plot_embeddings(activations_cache, pca_model)
+    # analysis_manager.raster_plot(activations_cache)
+    # analysis_manager.random_projections_plot(activations_cache)
+    # analysis_manager.feature_agglomeration(activations_cache)
+    # analysis_manager.probe_hidden_states(activations_cache)
 
     # See if the representations can be used to classify the ethical area
     # Why are we actually doing this? Hypothesis - better seperation of ethical areas
     # Leads to better steering vectors. This actually needs to be tested.
-    analysis_manager.classifier_battery(tsne_embedded_data_dict, labels, prompts, metrics_dir)
+    analysis_manager.classifier_battery(tsne_embedded_data_dict, tsne_labels, tsne_prompts, metrics_dir)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
