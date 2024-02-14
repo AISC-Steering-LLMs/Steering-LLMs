@@ -36,7 +36,7 @@ class AnalysisManager:
 
 
     # Make tsne plot for hidden state of every layer
-    def tsne_plot(self, activations_cache: list[Activation]) -> None:
+    def tsne_plot(self, activations_cache: list[Activation]) -> tuple[dict, list, list]:
 
         # Dictionary to store the embedded data for each layer
         # Key: layer number, Value: embedded data
