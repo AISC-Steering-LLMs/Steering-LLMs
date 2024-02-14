@@ -81,7 +81,7 @@ class AnalysisManager:
         pca = PCA(n_components=2, random_state=self.seed)
         labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
-        for layer in range(len(activations_cache[0].hidden_states)):
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing PCA Plots"):
             
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
 
@@ -125,7 +125,6 @@ class AnalysisManager:
                     wrap=True)
 
             plot_path = os.path.join(self.images_dir, f"raster_plot_layer_{layer}.svg")
-            tqdm.write(plot_path)
             plt.savefig(plot_path)
 
             plt.close()
