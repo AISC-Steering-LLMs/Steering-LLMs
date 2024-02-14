@@ -168,6 +168,7 @@ class AnalysisManager:
 
         labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
         unique_labels = sorted(list(set(labels)))
+        clf = DecisionTreeClassifier(random_state=self.seed)
 
         for layer in range(len(activations_cache[0].hidden_states)):
 
@@ -175,7 +176,6 @@ class AnalysisManager:
 
             X_train, X_test, y_train, y_test = train_test_split(data, labels, random_state=self.seed)
 
-            clf = DecisionTreeClassifier(random_state=self.seed)
             clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
 
