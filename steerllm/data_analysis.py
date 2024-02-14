@@ -148,12 +148,12 @@ class AnalysisManager:
     # Hierarchical Clustering
     def feature_agglomeration(self, activations_cache: list[Activation]) -> None:
 
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        agglo = cluster.FeatureAgglomeration(n_clusters=2)
+
         for layer in range(len(activations_cache[0].hidden_states)):
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-
-            agglo = cluster.FeatureAgglomeration(n_clusters=2)
             projected_data = agglo.fit_transform(data)
 
             df = pd.DataFrame(projected_data, columns=["X", "Y"])
