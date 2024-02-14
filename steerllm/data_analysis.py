@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.io as pio
 import numpy as np
+from tqdm import tqdm
 import os
 
 from typing import Any
@@ -101,7 +102,7 @@ class AnalysisManager:
     def raster_plot(self, activations_cache: list[Activation],
                     compression: int=5) -> None:
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
-        for layer in range(len(activations_cache[0].hidden_states)):
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing Raster Plots"):
             
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
             
@@ -125,7 +126,7 @@ class AnalysisManager:
                     wrap=True)
 
             plot_path = os.path.join(self.images_dir, f"raster_plot_layer_{layer}.svg")
-            print(plot_path)
+            tqdm.write(plot_path)
             plt.savefig(plot_path)
 
             plt.close()
