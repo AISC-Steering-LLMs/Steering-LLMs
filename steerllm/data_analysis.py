@@ -78,14 +78,13 @@ class AnalysisManager:
 
     # Make PCA plot for hidden state of every layer
     def pca_plot(self, activations_cache: list[Activation]) -> None:
-
+        pca = PCA(n_components=2, random_state=self.seed)
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
         for layer in range(len(activations_cache[0].hidden_states)):
             
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
 
-            pca = PCA(n_components=2, random_state=self.seed)
             embedded_data = pca.fit_transform(data)
             
             df = pd.DataFrame(embedded_data, columns=["X", "Y"])
