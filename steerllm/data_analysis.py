@@ -50,11 +50,9 @@ class AnalysisManager:
         prompts = [act.prompt for act in activations_cache]
         for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing T-SNE Plots"):
             
-            # print(f"layer {layer}")
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
 
-            # print("data.shape", data.shape)
 
             tsne = TSNE(n_components=2, random_state=self.seed)
             embedded_data = tsne.fit_transform(data)
@@ -211,12 +209,10 @@ class AnalysisManager:
 
         for name, clf in classifiers.items():
 
-            print(name)
 
             metrics_dict = {"Layer": [], "Accuracy": [], "Precision": [], "Recall": [], "F1 Score": []}
 
-            for layer, representations in embedded_data_dict.items():
-                print(layer)
+            for layer, representations in tqdm(embedded_data_dict.items(), desc=f"Computing {name}"):
                 # random_state is set to 42 for reproducibility
                 # the same train-test split is used for all classifiers
                 X_train, X_test, y_train, y_test = train_test_split(representations, labels, test_size=0.2, random_state=42)
