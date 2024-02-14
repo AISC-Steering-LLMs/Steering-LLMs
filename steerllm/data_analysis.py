@@ -166,11 +166,12 @@ class AnalysisManager:
 
     def probe_hidden_states(self, activations_cache: list[Activation]) -> None:
 
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        unique_labels = sorted(list(set(labels)))
+
         for layer in range(len(activations_cache[0].hidden_states)):
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-            unique_labels = sorted(list(set(labels)))
 
             X_train, X_test, y_train, y_test = train_test_split(data, labels, random_state=self.seed)
 
