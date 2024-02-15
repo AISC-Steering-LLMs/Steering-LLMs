@@ -6,11 +6,13 @@ from omegaconf import DictConfig
 import hydra
 
 from data_handler import DataHandler
-from data_analysis import AnalysisManager
-from model_handling import ModelHandler
+from data_analyser import DataAnalyzer
+from model_handler import ModelHandler
 
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
+from sklearn.cluster import FeatureAgglomeration
+
 
 
 # Constants
@@ -64,24 +66,27 @@ def main(cfg: DictConfig) -> None:
     
     model_handler.add_numpy_hidden_states(activations_cache)
     
-    analysis_manager = AnalysisManager(images_dir=images_dir, seed=SEED)
+    analysis_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
     # Get various representations for each layer
+    # and plot them
     tsne_model = TSNE(n_components=2, random_state=42)
-    tsne_embedded_data_dict, tsne_labels, tsne_prompts = analysis_manager.plot_embeddings(activations_cache, tsne_model)
-    
-
+    tsne_embedded_data_dict, tsne_labels, tsne_prompts = analysis_analyzer.plot_embeddings(activations_cache, tsne_model)
     pca_model = PCA(n_components=2, random_state=42)
-    pca_embedded_data_dict, labels, prompts = analysis_manager.plot_embeddings(activations_cache, pca_model)
-    # analysis_manager.raster_plot(activations_cache)
-    # analysis_manager.random_projections_plot(activations_cache)
-    # analysis_manager.feature_agglomeration(activations_cache)
-    # analysis_manager.probe_hidden_states(activations_cache)
+    pca_embedded_data_dict, pca_labels, pca_prompts = analysis_analyzer.plot_embeddings(activations_cache, pca_model)
+    fa_model = FeatureAgglomeration(n_clusters=2)
+    fa_embedded_data_dict, fa_labels, fa_prompts = analysis_analyzer.plot_embeddings(activations_cache, fa_model)
+
+    # Further analysis
+    analysis_analyzer.raster_plot(activations_cache)
+    analysis_analyzer.random_projections_analysis(activations_cache)
+    analysis_analyzer.probe_hidden_states(activations_cache)
 
     # See if the representations can be used to classify the ethical area
     # Why are we actually doing this? Hypothesis - better seperation of ethical areas
     # Leads to better steering vectors. This actually needs to be tested.
-    analysis_manager.classifier_battery(tsne_embedded_data_dict, tsne_labels, tsne_prompts, metrics_dir)
+    # Only done with the t-SNE representation but could be done with others (PCA, heirarchical clustering, etc.)
+    analysis_analyzer.classifier_battery(tsne_embedded_data_dict, tsne_labels, tsne_prompts, 0.2)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.
