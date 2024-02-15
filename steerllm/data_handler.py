@@ -22,11 +22,6 @@ class DataHandler:
     Provides utilities to load prompts and related data from CSV/Excel files, create output
     directories for storing experiment results, and save configuration and prompt data for
     reproducibility and record-keeping.
-
-    Parameters:
-    ----------
-    data_path : str
-        Base directory path where data files are located and output directories will be created.
     """
 
     # Contants for the columns in the prompts CSV
@@ -36,7 +31,19 @@ class DataHandler:
 
 
 
-    def __init__(self, data_path: str):
+    def __init__(self, data_path: str) -> None:
+        """
+        Initializes the DataHandler with a base directory path for data files and outputs.
+
+        Parameters:
+        ----------
+        data_path : str
+            Base directory path where data files are located and output directories will be created.
+
+        Returns:
+        -------
+        None
+        """
         self.data_path = data_path
 
 
@@ -71,14 +78,14 @@ class DataHandler:
 
 
 
-    def create_output_directories(self) -> Tuple[str, str]:
+    def create_output_directories(self) -> Tuple[str, str, str]:
         """
         Creates directories for storing outputs of an experiment run, including subdirectories
         for images and metrics, based on the current UTC timestamp.
 
         Parameters
         ----------
-        None
+        No parameters.
 
         Returns
         -------

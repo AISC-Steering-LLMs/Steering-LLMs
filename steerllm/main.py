@@ -37,6 +37,8 @@ def main(cfg: DictConfig) -> None:
     # Instaitiate the model handler will load the model
     model_handler = ModelHandler(cfg)
 
+    
+
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
 
@@ -64,29 +66,28 @@ def main(cfg: DictConfig) -> None:
     # keep the complete set of activations in memory (don't reload them)
     model_handler.compute_activations(activations_cache)
     
-    model_handler.add_numpy_hidden_states(activations_cache)
     
-    analysis_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
+    data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
     # Get various representations for each layer
     # and plot them
     tsne_model = TSNE(n_components=2, random_state=42)
-    tsne_embedded_data_dict, tsne_labels, tsne_prompts = analysis_analyzer.plot_embeddings(activations_cache, tsne_model)
+    tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
     pca_model = PCA(n_components=2, random_state=42)
-    pca_embedded_data_dict, pca_labels, pca_prompts = analysis_analyzer.plot_embeddings(activations_cache, pca_model)
+    pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
     fa_model = FeatureAgglomeration(n_clusters=2)
-    fa_embedded_data_dict, fa_labels, fa_prompts = analysis_analyzer.plot_embeddings(activations_cache, fa_model)
+    fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
 
     # Further analysis
-    analysis_analyzer.raster_plot(activations_cache)
-    analysis_analyzer.random_projections_analysis(activations_cache)
-    analysis_analyzer.probe_hidden_states(activations_cache)
+    data_analyzer.raster_plot(activations_cache)
+    data_analyzer.random_projections_analysis(activations_cache)
+    data_analyzer.probe_hidden_states(activations_cache)
 
     # See if the representations can be used to classify the ethical area
     # Why are we actually doing this? Hypothesis - better seperation of ethical areas
     # Leads to better steering vectors. This actually needs to be tested.
     # Only done with the t-SNE representation but could be done with others (PCA, heirarchical clustering, etc.)
-    analysis_analyzer.classifier_battery(tsne_embedded_data_dict, tsne_labels, tsne_prompts, 0.2)
+    data_analyzer.classifier_battery(tsne_embedded_data_dict, tsne_labels, tsne_prompts, 0.2)
 
     # Each transformer component has a HookPoint for every activation, which
     # wraps around that activation.

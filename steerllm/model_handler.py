@@ -1,121 +1,148 @@
 import os
+import gc
+from functools import partial
 import pickle
 import numpy as np
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
+import transformer_lens.utils as utils
 import transformer_lens
-
+from tqdm import tqdm
 from omegaconf import DictConfig
 from typing import Any
 
+
 from data_handler import Activation
+
 
 class ModelHandler:
     """
-    Initializes the ModelHandler with the specified configuration and loads the model.
-    Includes methods to compute activations and hidden states, and to write the activations/
-
-    Parameters:
-    ----------
-    config : DictConfig
-        A configuration object containing model and experiment settings, including
-        whether to use GPU and the name of the model to be loaded.
+    Handles loading and processing of a transformer model specified in the configuration. 
+    It facilitates the computation of activations for given inputs, saves these activations, 
+    and supports various model configurations, including models optimized for GPU usage.
     """
-    
-    def __init__(self, config: DictConfig):
+
+    def __init__(self, config: DictConfig) -> None:
+        """
+        Initializes the ModelHandler with a given configuration.
+
+        Parameters
+        ----------
+        config : DictConfig
+            A Hydra DictConfig object containing the model's configuration settings.
+        """
         self.config = config
         self.model = self.load_model()
+
+
+    def save_residual_hook(self, act, output, hook) -> None:
+        """
+        This hook function saves the output (residual stream) of each layer to disk.
+        It generates a unique filename for each layer based on its order.
+        
+        Parameters
+        ----------
+        act : Activation
+            The Activation object associated with the current input being processed.
+        output : torch.Tensor
+            The output tensor from the layer to which this hook is attached.
+        hook : Any
+            The hook reference, not used in this function but required by the hook signature.
+
+        Returns
+        -------
+        None
+        """
+        act.hidden_states.append(output.cpu().numpy()[0][-1])
 
 
 
     def load_model(self) -> Any:
         """
-        Loads the transformer model specified in the configuration.
+        Loads the transformer model based on the configuration provided at initialization.
+        Adjusts settings for GPU usage and model-specific configurations.
 
-        Depending on the configuration, this method either loads a model directly with
-        transformer_lens for GPT models or uses Hugging Face's AutoModelForCausalLM and
-        AutoTokenizer for other transformer models, wrapping it in a HookedTransformer.
-
+        Parameters
+        ----------
+        No parameters.
+        
         Returns
         -------
         Any
-            The loaded transformer model, wrapped in a HookedTransformer object if necessary.
+            The loaded transformer model, ready for generating activations.
+        
         """
-        if not self.config.use_gpu:
-            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        torch.set_grad_enabled(False)
+
+        device = "cpu" if not self.config.use_gpu else utils.get_device()
+        # if not self.config.use_gpu:
+        #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
         if self.config.model_name.startswith("gpt"):
-            model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name)
+            model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name, device=device)
+        elif self.config.model_name.startswith("meta-llama") and self.config.use_gpu == True:
+            hf_model = AutoModelForCausalLM.from_pretrained(self.config.model_name, load_in_4bit=True, torch_dtype=torch.float32)
+            tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
+            model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name,
+                                                         hf_model=hf_model,
+                                                         torch_dtype=torch.float32,
+                                                         fold_ln=False,
+                                                         fold_value_biases=False,
+                                                         center_writing_weights=False,
+                                                         center_unembed=False,
+                                                         tokenizer=tokenizer)
         else:
             hf_model = AutoModelForCausalLM.from_pretrained(self.config.model_name)
             tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
             model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name,
-                                                                       tokenizer=tokenizer,
-                                                                       hf_model=hf_model)
+                                                         hf_model=hf_model,
+                                                         tokenizer=tokenizer, device=device)
+        gc.collect()
+        gc.collect() # Running twice because of weird timing reasons.
         return model
-
 
 
     def compute_activations(self, activations_cache: list[Activation]) -> None:
         """
-        Performs a forward pass using the model for each activation object in the list,
-        caching the raw activations data.
+        Computes and caches the model's activations for each input in the provided activations cache.
 
         Parameters
         ----------
-        activations_cache : List[Activation]
-            A list of Activation objects for which to compute and cache the model's
-            raw activations data.
+        activations_cache : list[Activation]
+            A list of Activation objects, each representing an input for which to compute activations.
 
         Returns
         -------
         None
         """
-        for act in activations_cache:
-            logits, raw_activations = self.model.run_with_cache(act.prompt)
-            act.raw_activations = raw_activations
-
-
-
-    def add_numpy_hidden_states(self, activations_cache: list[Activation]) -> None:
-        """
-        Extracts and stores the hidden states from the raw activations for each Activation
-        object in the list.
-
-        Parameters
-        ----------
-        activations_cache : List[Activation]
-            A list of Activation objects with raw activations data. This method extracts
-            the hidden states and appends them to each object's hidden_states attribute.
-        
-        Returns
-        -------
-        None
-        """
-        for act in activations_cache:
-            raw_act = act.raw_activations
-            for hook_name in raw_act:
-                if "hook_resid_post" in hook_name:
-                    numpy_activation = raw_act[hook_name].cpu().numpy()
-                    act.hidden_states.append(numpy_activation[0][-1])
-
-
+        for act in tqdm(activations_cache, desc="Computing activations"):
+            pattern_hook_names_filter = lambda name: name.startswith("blocks") and name.endswith("hook_resid_post")
+            save_act = partial(self.save_residual_hook, act)
+            tokens = self.model.to_tokens(act.prompt)
+            self.model.run_with_hooks(
+                tokens,
+                return_type=None,
+                fwd_hooks=[(
+                    pattern_hook_names_filter,
+                    save_act
+                )]
+            )
 
     @staticmethod
     def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:
         """
-        Serializes and saves the activations cache to a file.
+        Writes the cached activations data to a file for persistence.
 
         Parameters
         ----------
-        activations_cache : List[Activation]
-            A list of Activation objects to be serialized and saved.
+        activations_cache : Any
+            The cached activations data to be persisted to disk.
         experiment_base_dir : str
-            The base directory where the activations cache file will be saved.
+            The base directory for the experiment, where the activations cache file will be saved.
 
-        Outputs
+        Returns
         -------
-        Creates a file named "activations_cache.pkl" in the specified directory,
-        containing the serialized list of Activation objects.
+        None
         """
         filename = os.path.join(experiment_base_dir, "activations_cache.pkl")
         with open(filename, 'wb') as f:
