@@ -1,8 +1,9 @@
 # Supported models listed here https://github.com/neelnanda-io/TransformerLens/blob/main/transformer_lens/loading_from_pretrained.py
-model_name: "stabilityai/stablelm-base-alpha-3b"
+# model_name: "stabilityai/stablelm-base-alpha-3b"
 # model_name: "meta-llama/Llama-2-7b-hf"
 # model_name: "meta-llama/Llama-2-13b-hf"
 # model_name: "gpt2-xl"
+model_name: "gpt2-small"
 experiment_notes: "Trying Eleni honesty contrastive with because."
 prompts_sheet: "../data/inputs/honesty_contrastive_formatted_final.csv"
 use_gpu: True
