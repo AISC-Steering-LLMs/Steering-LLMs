@@ -35,7 +35,7 @@ class DataHandler:
             raise ValueError("Expected file ending with .csv or .xlsx")
         return df.to_dict(orient="list")
 
-    def create_output_directories(self) -> Tuple[str, str]:
+    def create_output_directories(self) -> Tuple[str, str, str]:
         """Create and return paths for experiment output directories."""
         current_datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
         experiment_base_dir = os.path.join(self.data_path, "outputs", current_datetime)

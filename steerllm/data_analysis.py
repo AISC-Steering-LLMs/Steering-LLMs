@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.io as pio
 import numpy as np
+from tqdm import tqdm
 import os
 
 from typing import Any
@@ -36,7 +37,7 @@ class AnalysisManager:
 
 
     # Make tsne plot for hidden state of every layer
-    def tsne_plot(self, activations_cache: list[Activation]) -> None:
+    def tsne_plot(self, activations_cache: list[Activation]) -> tuple[dict, list, list]:
 
         # Dictionary to store the embedded data for each layer
         # Key: layer number, Value: embedded data
@@ -45,15 +46,13 @@ class AnalysisManager:
 
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
         # (12 with GPT-2-small) with representations
-        for layer in range(len(activations_cache[0].hidden_states)):
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        prompts = [act.prompt for act in activations_cache]
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing T-SNE Plots"):
             
-            # print(f"layer {layer}")
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-            prompts = [act.prompt for act in activations_cache]
 
-            # print("data.shape", data.shape)
 
             tsne = TSNE(n_components=2, random_state=self.seed)
             embedded_data = tsne.fit_transform(data)
@@ -77,14 +76,13 @@ class AnalysisManager:
 
     # Make PCA plot for hidden state of every layer
     def pca_plot(self, activations_cache: list[Activation]) -> None:
-
+        pca = PCA(n_components=2, random_state=self.seed)
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
-        for layer in range(len(activations_cache[0].hidden_states)):
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing PCA Plots"):
             
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
 
-            pca = PCA(n_components=2, random_state=self.seed)
             embedded_data = pca.fit_transform(data)
             
             df = pd.DataFrame(embedded_data, columns=["X", "Y"])
@@ -100,8 +98,10 @@ class AnalysisManager:
     # Raster Plot has columns = Neurons and rows = Prompts. One chart for each layer
     def raster_plot(self, activations_cache: list[Activation],
                     compression: int=5) -> None:
+
+
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
-        for layer in range(len(activations_cache[0].hidden_states)):
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing Raster Plots"):
             
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
             
@@ -125,7 +125,6 @@ class AnalysisManager:
                     wrap=True)
 
             plot_path = os.path.join(self.images_dir, f"raster_plot_layer_{layer}.svg")
-            print(plot_path)
             plt.savefig(plot_path)
 
             plt.close()
@@ -151,12 +150,12 @@ class AnalysisManager:
     # Hierarchical Clustering
     def feature_agglomeration(self, activations_cache: list[Activation]) -> None:
 
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        agglo = cluster.FeatureAgglomeration(n_clusters=2)
+
         for layer in range(len(activations_cache[0].hidden_states)):
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-
-            agglo = cluster.FeatureAgglomeration(n_clusters=2)
             projected_data = agglo.fit_transform(data)
 
             df = pd.DataFrame(projected_data, columns=["X", "Y"])
@@ -169,15 +168,16 @@ class AnalysisManager:
 
     def probe_hidden_states(self, activations_cache: list[Activation]) -> None:
 
+        labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
+        unique_labels = sorted(list(set(labels)))
+        clf = DecisionTreeClassifier(random_state=self.seed)
+
         for layer in range(len(activations_cache[0].hidden_states)):
 
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
-            labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
-            unique_labels = sorted(list(set(labels)))
 
             X_train, X_test, y_train, y_test = train_test_split(data, labels, random_state=self.seed)
 
-            clf = DecisionTreeClassifier(random_state=self.seed)
             clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
 
@@ -212,12 +212,10 @@ class AnalysisManager:
 
         for name, clf in classifiers.items():
 
-            print(name)
 
             metrics_dict = {"Layer": [], "Accuracy": [], "Precision": [], "Recall": [], "F1 Score": []}
 
-            for layer, representations in embedded_data_dict.items():
-                print(layer)
+            for layer, representations in tqdm(embedded_data_dict.items(), desc=f"Computing {name}"):
                 # random_state is set to 42 for reproducibility
                 # the same train-test split is used for all classifiers
                 X_train, X_test, y_train, y_test = train_test_split(representations, labels, test_size=0.2, random_state=42)

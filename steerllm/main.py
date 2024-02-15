@@ -32,6 +32,8 @@ def main(cfg: DictConfig) -> None:
     # Instaitiate the model handler will load the model
     model_handler = ModelHandler(cfg)
 
+    
+
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
 
@@ -59,7 +61,6 @@ def main(cfg: DictConfig) -> None:
     # keep the complete set of activations in memory (don't reload them)
     model_handler.compute_activations(activations_cache)
     
-    model_handler.add_numpy_hidden_states(activations_cache)
     
     analysis_manager = AnalysisManager(images_dir=images_dir, seed=SEED)
 
