@@ -98,6 +98,8 @@ class AnalysisManager:
     # Raster Plot has columns = Neurons and rows = Prompts. One chart for each layer
     def raster_plot(self, activations_cache: list[Activation],
                     compression: int=5) -> None:
+
+
         # Using activations_cache[0] is arbitrary as they all have the same number of layers
         for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc="Computing Raster Plots"):
             
