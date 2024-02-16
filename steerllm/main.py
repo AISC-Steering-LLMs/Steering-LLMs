@@ -37,7 +37,13 @@ def main(cfg: DictConfig) -> None:
     
     # Create a model handler
     # Instaitiate the model handler will load the model
+    logging.info("Creating model handler to load the model")
     model_handler = ModelHandler(cfg)
+
+
+
+    # Process data
+    logging.info("Processing data")
 
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
@@ -55,6 +61,11 @@ def main(cfg: DictConfig) -> None:
 
     activations_cache = data_handler.populate_data(prompts_dict)
 
+
+
+    # Get activations
+    logging.info("Getting activations")
+
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
     
@@ -66,15 +77,17 @@ def main(cfg: DictConfig) -> None:
     # keep the complete set of activations in memory (don't reload them)
     model_handler.compute_activations(activations_cache)
     
+
+
     # Analyze the data
+    logging.info("Running data analysis")
 
     data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
-    # Dimensionality reduction methods
+    # Dimensionality reduction analysis
+    logging.info("Running dimensionality reduction analysis")
 
-    data_analyzer.random_projections_analysis(activations_cache)
-
-    # TodDo: 
+    # ToDo: 
     # Would be good if our code could just take any valid
     # dimensionality reduction method from sci-kit learn.
     dimensionality_reduction_map = {
@@ -101,17 +114,23 @@ def main(cfg: DictConfig) -> None:
         else:
             logging.warning(f"Warning: {method_name} is not a valid dimension reduction method or is not configured.")
 
+    # Other dimensionality reduction related analysis
+    logging.info("Running other dimensionality reduction related analysis")
+
+    for method_name in cfg.other_dim_red_analyses.methods:
+        if hasattr(data_analyzer, method_name):
+            getattr(data_analyzer, method_name)(activations_cache)
+        else:
+            print(f"Warning: Method {method_name} not found in DataAnalyzer.")
 
     # Further analysis not based on dimensionality reduction
-    data_analyzer.raster_plot(activations_cache)
-    data_analyzer.probe_hidden_states(activations_cache)
+    logging.info("Running further analysis not based on dimensionality reduction")
 
-    # Each transformer component has a HookPoint for every activation, which
-    # wraps around that activation.
-    # The HookPoint acts as an identity function, but has a variety of helper
-    # functions that allows us to put PyTorch hooks in to edit and access the
-    # relevant activation
-    # Relevant when changing the model
+    for method_name in cfg.non_dimensionality_reduction.methods:
+        if hasattr(data_analyzer, method_name):
+            getattr(data_analyzer, method_name)(activations_cache)
+        else:
+            print(f"Warning: Method {method_name} not found in DataAnalyzer.")
     
     # Activations cache takes up a lot of space, only write if user sets
     # parameter
