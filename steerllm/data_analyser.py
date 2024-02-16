@@ -72,7 +72,7 @@ class DataAnalyzer:
     # DIMINSIONALITY REDUCTION ANALYSIS METHODS #
     #############################################
 
-    def plot_embeddings(self, activations_cache: List[Activation], dim_red_model: Any) -> Tuple[Dict[int, np.ndarray], List[str], List[str]]:
+    def plot_embeddings(self, activations_cache: List[Activation], dr_instance: Any) -> Tuple[Dict[int, np.ndarray], List[str], List[str]]:
         """
         Generates and saves plots from activations using the specified dimensionality
         reduction model to visualize the distribution of different ethical areas in
@@ -98,21 +98,21 @@ class DataAnalyzer:
         -------
         Saves PNG files of the scatter plots.
         """
-        plot_title = type(dim_red_model).__name__
+        dr_instance_name = type(dr_instance).__name__
         embedded_data_dict, all_labels, all_prompts = {}, [], []
-        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc=plot_title):
+        for layer in tqdm(range(len(activations_cache[0].hidden_states)), desc=dr_instance_name):
             data = np.stack([act.hidden_states[layer] for act in activations_cache])
             labels = [f"{act.ethical_area} {act.positive}" for act in activations_cache]
             prompts = [act.prompt for act in activations_cache]
 
-            embedded_data = dim_red_model.fit_transform(data)
+            embedded_data = dr_instance.fit_transform(data)
             embedded_data_dict[layer] = embedded_data
 
             if not all_labels:
                 all_labels.extend(labels)
                 all_prompts.extend(prompts)
 
-            self._save_plot(embedded_data, labels, layer, plot_title)
+            self._save_plot(embedded_data, labels, layer, dr_instance_name)
 
         return embedded_data_dict, all_labels, all_prompts
 
@@ -201,7 +201,15 @@ class DataAnalyzer:
 
     
 
-    def classifier_battery(self, embedded_data_dict: Dict[int, np.ndarray], labels: List[str], prompts: List[str], 
+    # TodDo: 
+    # Would be good if our code could just take any valid
+    # classifier method from sci-kit learn.
+    def classifier_battery(self,
+                           selected_classifiers,
+                           embedded_data_dict: Dict[int, np.ndarray],
+                           labels: List[str],
+                           prompts: List[str],
+                           dr_instance: Any, 
                            test_size: float = 0.2) -> None:
         """
         Runs a battery of classifiers on the given dataset, generating performance metrics and decision boundary plots.
@@ -225,7 +233,9 @@ class DataAnalyzer:
         --------
         Saves classifier performance metrics and decision boundary plots for each layer.
         """
-        classifiers = {
+        dr_instance_name = type(dr_instance).__name__
+
+        classifier_map = {
             "logistic_regression": LogisticRegression(),
             "decision_tree": DecisionTreeClassifier(),
             "random_forest": RandomForestClassifier(),
@@ -234,16 +244,25 @@ class DataAnalyzer:
             "gradient_boosting": GradientBoostingClassifier()
         }
 
-        for clf_name, clf in classifiers.items():
-            logging.info(f"Evaluating {clf_name}")
-            metrics_dict = self.evaluate_classifiers(clf, embedded_data_dict, labels, prompts, test_size, clf_name)
-            metrics_df = pd.DataFrame(metrics_dict)
-            metrics_df.to_csv(f"{self.metrics_dir}/metrics_{clf_name}.csv", index=False)
+        for clf_name in selected_classifiers:
+            clf = classifier_map.get(clf_name)
+            try:
+                metrics_dict = self.evaluate_classifiers(clf, embedded_data_dict, labels, prompts, test_size, dr_instance_name, clf_name)
+                metrics_df = pd.DataFrame(metrics_dict)
+                metrics_df.to_csv(f"{self.metrics_dir}/metrics_{dr_instance_name}_{clf_name}.csv", index=False)
+            except:
+                logging.warning(f"Classifier {clf_name} not found in the current list of allowed classifiers or has been incorrectly handled.")
+                
 
 
-
-    def evaluate_classifiers(self, clf: BaseEstimator, embedded_data_dict: Dict[int, np.ndarray], 
-                             labels: List[str], prompts: List[str],test_size: float, clf_name: str) -> Dict[str, List[Any]]:
+    def evaluate_classifiers(self,
+                             clf: BaseEstimator,
+                             embedded_data_dict: Dict[int, np.ndarray], 
+                             labels: List[str],
+                             prompts: List[str],
+                             test_size: float,
+                             dr_instance_name: str,
+                             clf_name: str) -> Dict[str, List[Any]]:
         """
         The function iterates over each layer in the embedded_data_dict, splits the data into 
         training and testing sets, fits the classifier, makes predictions, and calculates 
@@ -278,7 +297,7 @@ class DataAnalyzer:
         It's just that it would only look at the first two dimensions for the decision boundary plots.
         """
         metrics_dict = {"Layer": [], "Accuracy": [], "Precision": [], "Recall": [], "F1 Score": []}
-        for layer, representations in tqdm(embedded_data_dict.items(), desc=f"Computing {clf_name}"):
+        for layer, representations in tqdm(embedded_data_dict.items(), desc=f"Computing {dr_instance_name} {clf_name}"):
             X_train, X_test, y_train, y_test = train_test_split(representations, labels, test_size=test_size, random_state=self.seed)
             clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
@@ -289,13 +308,19 @@ class DataAnalyzer:
             metrics_dict["Recall"].append(recall_score(y_test, y_pred, average='weighted', zero_division=0))
             metrics_dict["F1 Score"].append(f1_score(y_test, y_pred, average='weighted', zero_division=0))
 
-            self.plot_decision_boundary(clf, representations, labels, prompts, layer, clf_name)
+            self.plot_decision_boundary(clf, representations, labels, prompts, layer, dr_instance_name, clf_name)
         return metrics_dict
     
 
 
-    def plot_decision_boundary(self, clf: BaseEstimator, representations: np.ndarray, labels: List[str], 
-                               prompts: List[str], layer: int, clf_name: str) -> None:
+    def plot_decision_boundary(self,
+                               clf: BaseEstimator,
+                               representations: np.ndarray,
+                               labels: List[str], 
+                               prompts: List[str],
+                               layer: int,
+                               dr_instance_name: str,
+                               clf_name: str) -> None:
         """
         Plots the decision boundary of a classifier and the data points using both
         Matplotlib and Plotly for a given layer's representations.
@@ -362,8 +387,8 @@ class DataAnalyzer:
         
         # Plots relating to metrics are saved in the metrics directory
         # but maybe they should be saved in the images directory?
-        pio.write_html(fig, f"{self.metrics_dir}/decision_boundary_{clf_name}_{layer}.html")
-        fig.write_image(f"{self.metrics_dir}/decision_boundary_{clf_name}_{layer}.png")
+        pio.write_html(fig, f"{self.metrics_dir}/decision_boundary_{dr_instance_name}_{clf_name}_{layer}.html")
+        fig.write_image(f"{self.metrics_dir}/decision_boundary_{dr_instance_name}_{clf_name}_{layer}.png")
 
 
 
