@@ -2,7 +2,7 @@
 
 import matplotlib
 import os
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import hydra
 
 from data_handler import DataHandler
@@ -12,6 +12,8 @@ from model_handler import ModelHandler
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from sklearn.cluster import FeatureAgglomeration
+
+import logging
 
 
 
@@ -35,9 +37,13 @@ def main(cfg: DictConfig) -> None:
     
     # Create a model handler
     # Instaitiate the model handler will load the model
+    logging.info("Creating model handler to load the model")
     model_handler = ModelHandler(cfg)
 
-    
+
+
+    # Process data
+    logging.info("Processing data")
 
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
@@ -55,6 +61,11 @@ def main(cfg: DictConfig) -> None:
 
     activations_cache = data_handler.populate_data(prompts_dict)
 
+
+
+    # Get activations
+    logging.info("Getting activations")
+
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
     
@@ -66,35 +77,60 @@ def main(cfg: DictConfig) -> None:
     # keep the complete set of activations in memory (don't reload them)
     model_handler.compute_activations(activations_cache)
     
-    
+
+
+    # Analyze the data
+    logging.info("Running data analysis")
+
     data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
-    # Get various representations for each layer
-    # and plot them
-    tsne_model = TSNE(n_components=2, random_state=42)
-    tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
-    pca_model = PCA(n_components=2, random_state=42)
-    pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
-    fa_model = FeatureAgglomeration(n_clusters=2)
-    fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
+    # Dimensionality reduction analysis
+    logging.info("Running dimensionality reduction analysis")
 
-    # Further analysis
-    data_analyzer.raster_plot(activations_cache)
-    data_analyzer.random_projections_analysis(activations_cache)
-    data_analyzer.probe_hidden_states(activations_cache)
+    # ToDo: 
+    # Would be good if our code could just take any valid
+    # dimensionality reduction method from sci-kit learn.
+    dimensionality_reduction_map = {
+        'pca': PCA,
+        'tsne': TSNE,
+        'feature_agglomeration': FeatureAgglomeration,
+        # Add more mappings as needed
+    }
+    
+    classifier_methods = OmegaConf.to_container(cfg.classifiers.methods, resolve=True)
 
-    # See if the representations can be used to classify the ethical area
+    # See if the dimensionality representation representations can be used to classify the ethical area
     # Why are we actually doing this? Hypothesis - better seperation of ethical areas
     # Leads to better steering vectors. This actually needs to be tested.
-    # Only done with the t-SNE representation but could be done with others (PCA, heirarchical clustering, etc.)
-    data_analyzer.classifier_battery(tsne_embedded_data_dict, tsne_labels, tsne_prompts, 0.2)
+    for method_name, method_config in cfg.dim_red.methods.items():
+        if method_name in dimensionality_reduction_map:
+            # Prepare kwargs by converting OmegaConf to a native Python dict
+            kwargs = OmegaConf.to_container(method_config, resolve=True)
+            dr_class = dimensionality_reduction_map[method_name]
+            dr_instance = dr_class(**kwargs)
+            embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, dr_instance)
+            # Now X_transformed can be used for further analysis or classification
+            data_analyzer.classifier_battery(classifier_methods, embedded_data_dict, labels, prompts, dr_instance, 0.2)
+        else:
+            logging.warning(f"Warning: {method_name} is not a valid dimension reduction method or is not configured.")
 
-    # Each transformer component has a HookPoint for every activation, which
-    # wraps around that activation.
-    # The HookPoint acts as an identity function, but has a variety of helper
-    # functions that allows us to put PyTorch hooks in to edit and access the
-    # relevant activation
-    # Relevant when changing the model
+    # Other dimensionality reduction related analysis
+    logging.info("Running other dimensionality reduction related analysis")
+
+    for method_name in cfg.other_dim_red_analyses.methods:
+        if hasattr(data_analyzer, method_name):
+            getattr(data_analyzer, method_name)(activations_cache)
+        else:
+            print(f"Warning: Method {method_name} not found in DataAnalyzer.")
+
+    # Further analysis not based on dimensionality reduction
+    logging.info("Running further analysis not based on dimensionality reduction")
+
+    for method_name in cfg.non_dimensionality_reduction.methods:
+        if hasattr(data_analyzer, method_name):
+            getattr(data_analyzer, method_name)(activations_cache)
+        else:
+            print(f"Warning: Method {method_name} not found in DataAnalyzer.")
     
     # Activations cache takes up a lot of space, only write if user sets
     # parameter

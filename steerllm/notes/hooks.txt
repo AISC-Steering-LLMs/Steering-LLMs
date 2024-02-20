@@ -1,0 +1,6 @@
+Each transformer component has a HookPoint for every activation, which
+wraps around that activation.
+The HookPoint acts as an identity function, but has a variety of helper
+functions that allows us to put PyTorch hooks in to edit and access the
+relevant activation
+Relevant when changing the model
