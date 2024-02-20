@@ -147,6 +147,10 @@ class ModelHandler:
         for act in activations_cache:
             act.hidden_states = []
 
+
+    def get_hidden_layers(self) -> list[int]:
+        return list(range(-1, -self.model.cfg.n_layers, -1))
+
     @staticmethod
     def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:
         """
