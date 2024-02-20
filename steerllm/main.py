@@ -8,12 +8,14 @@ import hydra
 from data_handler import DataHandler
 from data_analyser import DataAnalyzer
 from model_handler import ModelHandler
+from steering_handler import SteeringHandler
 
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from sklearn.cluster import FeatureAgglomeration
 
 import logging
+
 
 
 
@@ -48,11 +50,14 @@ def main(cfg: DictConfig) -> None:
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
 
+
     # Load the inputs (prompts)
     prompts_dict = data_handler.csv_to_dictionary(cfg.prompts_sheet)
 
+
     # Create output directories
     experiment_base_dir, images_dir, metrics_dir = data_handler.create_output_directories()
+
 
     # Copy the config.yaml file to the output directory and the prompts
     # Why? So we can see what the configuration was for a given run.
@@ -65,27 +70,31 @@ def main(cfg: DictConfig) -> None:
 
     # Get activations
     logging.info("Getting activations")
+    steering_handler = SteeringHandler(cfg, model_handler, data_handler)
+
+
+
 
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
     
-    # Keeping info in memory in activations cache uses a lot of RAM with the bigger models
-    # When running this script with gpt-XL and 150 prompts, run out of memory.
-    # Only 6gb of model (1.5b parameters, float32)
-    # 40 prompts in good/evil. Takes 4 minutes, uses 18 GB of RAM
-    # TODO: Save things as we use them, don't keep everything in memory, don't
-    # keep the complete set of activations in memory (don't reload them)
-    model_handler.compute_activations(activations_cache)
+    hidden_layers = model_handler.get_hidden_layers()
+    concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
     
-
-
-    # Analyze the data
-    logging.info("Running data analysis")
-
     data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
-    # Dimensionality reduction analysis
-    logging.info("Running dimensionality reduction analysis")
+    data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
+
+    model_handler.compute_activations(activations_cache)
+
+    # Get various representations for each layer
+    # and plot them
+    tsne_model = TSNE(n_components=2, random_state=42)
+    tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
+    pca_model = PCA(n_components=2, random_state=42)
+    pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
+    fa_model = FeatureAgglomeration(n_clusters=2)
+    fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
 
     # ToDo: 
     # Would be good if our code could just take any valid
