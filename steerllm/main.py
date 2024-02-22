@@ -70,7 +70,6 @@ def main(cfg: DictConfig) -> None:
 
     # Get activations
     logging.info("Getting activations")
-    steering_handler = SteeringHandler(cfg, model_handler, data_handler)
 
 
 
@@ -78,12 +77,9 @@ def main(cfg: DictConfig) -> None:
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
     
-    hidden_layers = model_handler.get_hidden_layers()
-    concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
     
     data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
-    data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
 
     model_handler.compute_activations(activations_cache)
 
@@ -140,6 +136,15 @@ def main(cfg: DictConfig) -> None:
             getattr(data_analyzer, method_name)(activations_cache)
         else:
             print(f"Warning: Method {method_name} not found in DataAnalyzer.")
+
+
+    if cfg.enable_steering:
+        # Steering
+        logging.info("Running steering")
+        steering_handler = SteeringHandler(cfg, model_handler, data_handler)
+        hidden_layers = model_handler.get_hidden_layers()
+        concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
+        data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
     
     # Activations cache takes up a lot of space, only write if user sets
     # parameter
