@@ -157,7 +157,7 @@ torch==2.1.1
 tornado==6.4
 tqdm==4.66.1
 traitlets==5.14.0
-transformer-lens==1.11.0
+transformer-lens @ https://github.com/coolvision/TransformerLens/archive/refs/heads/llama_4bit_v2.zip#sha256=b0737c40b53c76bee1ae7afc2b664c8dabdcfddeef87c0f7420d187182a664b0
 transformers==4.35.2
 triton==2.1.0
 typeguard==2.13.3
