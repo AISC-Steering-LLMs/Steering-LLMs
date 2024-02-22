@@ -41,6 +41,7 @@ dim_red:
 
 # To run one of the classifiers, comment it out, eg
     # logistic_regression:
+
 # Note that currently all classifiers will be run
 # with all the uncommented dimensionality reduction methods
 # E.g. if pca, tsne, and feature_agglomeration are uncommented,
