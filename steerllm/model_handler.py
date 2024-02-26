@@ -53,6 +53,8 @@ class ModelHandler:
         -------
         None
         """
+        if act.hidden_states == None:
+            act.hidden_states = []
         act.hidden_states.append(output.cpu().numpy()[0][-1])
 
 
@@ -115,7 +117,8 @@ class ModelHandler:
         -------
         None
         """
-        for act in tqdm(activations_cache, desc="Computing activations"):
+        self.reset_activations(activations_cache)
+        for act in tqdm(activations_cache, desc="Computing activations", disable=True):
             pattern_hook_names_filter = lambda name: name.startswith("blocks") and name.endswith("hook_resid_post")
             save_act = partial(self.save_residual_hook, act)
             tokens = self.model.to_tokens(act.prompt)
@@ -127,6 +130,26 @@ class ModelHandler:
                     save_act
                 )]
             )
+
+    def reset_activations(self, activations_cache: list[Activation]) -> None:
+        """
+        Resets the hidden states of each activation in the activations cache.
+        
+        Parameters
+        ----------
+        activations_cache : list[Activation]
+            A list of Activation objects, each representing an input for which to compute activations.
+
+        Returns
+        -------
+        None
+        """
+        for act in activations_cache:
+            act.hidden_states = []
+
+
+    def get_hidden_layers(self) -> list[int]:
+        return list(range(-1, -self.model.cfg.n_layers, -1))
 
     @staticmethod
     def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:

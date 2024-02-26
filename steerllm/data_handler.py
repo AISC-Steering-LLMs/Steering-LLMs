@@ -1,4 +1,6 @@
+import json
 import os
+import random
 import pandas as pd
 from dataclasses import dataclass
 from typing import Any, List, Tuple, Dict
@@ -182,3 +184,43 @@ class DataHandler:
             act = Activation(prompt, ethical_area, bool(positive), None, [])
             activations_cache.append(act)
         return activations_cache
+
+
+
+    def transform_to_steering_dataset(self, prompts_dict: Dict[str, Any], user_tag='', assistant_tag='', seed=0):
+        random.seed(seed)
+
+        template_str = '{user_tag} Consider the {concept} of the following scenario:\nScenario: {scenario}\nAnswer: {assistant_tag} '
+        concepts = set(prompts_dict[DataHandler.ETHICAL_AREA_COLUMN])
+
+        raw_data = list(zip(prompts_dict[DataHandler.PROMPT_COLUMN], prompts_dict[DataHandler.ETHICAL_AREA_COLUMN], prompts_dict[DataHandler.POS_COLUMN]))
+
+        formatted_data = {}
+        for concept in concepts:
+            format_str = lambda x: template_str.format(concept=concept, scenario=x, user_tag=user_tag, assistant_tag=assistant_tag)
+            current = [Activation(format_str(prompt), concept, True, raw_activations=[], hidden_states=[]) for (prompt, c, _) in raw_data if c == concept]
+            other = [Activation(format_str(prompt), concept, False, [], []) for (prompt, c, _) in raw_data if c != concept]
+            random.shuffle(other)
+
+            data = [[c,o] for c,o in zip(current, other)]
+
+
+            train_labels = []
+            for d in data:
+                true_s = d[0]
+                random.shuffle(d)
+                train_labels.append([s == true_s for s in d])
+            
+            concept_train_data = np.concatenate(data).tolist()
+            concept_test_data = np.concatenate([[c,o] for c,o in zip(current, other)]).tolist()
+
+
+            
+
+            formatted_data[concept] = {
+                'train': {'data': concept_train_data, 'labels': train_labels},
+                'test': {'data': concept_test_data, 'labels': [[1,0]* len(concept_test_data)]}
+            }
+
+
+        return formatted_data

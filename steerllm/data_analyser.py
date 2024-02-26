@@ -515,3 +515,40 @@ class DataAnalyzer:
         combined_report_filename = os.path.join(self.metrics_dir, "probe_hidden_states_combined_classification_report.txt")
         with open(combined_report_filename, 'w') as report_file:
             report_file.write(all_reports)
+
+
+
+    def repreading_accuracy_plot(self, hidden_layers, concept_H_tests, concept_rep_readers):
+
+        concepts = list(concept_H_tests.keys())
+
+        results = {layer: {} for layer in hidden_layers}
+        for layer in hidden_layers:
+            for idx, concept in enumerate(concepts):
+                H_test = [H[layer] for H in concept_H_tests[concept]] 
+                H_test = [H_test[i:i+2] for i in range(0, len(H_test), 2)]
+                
+                sign = concept_rep_readers[concept].direction_signs[layer]
+                eval_func = min if sign == -1 else max
+                
+                cors = np.mean([eval_func(H) == H[0] for H in H_test])
+                
+                results[layer][concept] = cors
+
+        for concept in concepts:
+            x = list(results.keys())
+            y = [results[layer][concept] for layer in results]
+
+            plt.plot(x, y, label=concept)
+
+
+        plt.title("Emotions Acc")
+        plt.xlabel("Layer")
+        plt.ylabel("Acc")
+        plt.legend(loc="best")
+        plt.grid(True)
+
+        plot_path = os.path.join(self.images_dir, f"repreading_accuracy_plot.png")
+        plt.savefig(plot_path)
+        plt.close()
+
