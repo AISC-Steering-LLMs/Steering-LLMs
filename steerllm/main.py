@@ -83,6 +83,23 @@ def main(cfg: DictConfig) -> None:
     
     data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
 
+    if cfg.enable_steering:
+        # Steering
+        logging.info("Running steering")
+        steering_handler = SteeringHandler(cfg, model_handler, data_handler)
+        hidden_layers = model_handler.get_hidden_layers()
+        concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
+        data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
+
+        logging.info("Runing Control Pipeline")
+        concepts = list(concept_rep_readers.keys())
+        base_continuation, control_continuation = steering_handler.control(concept_rep_readers[concepts[0]], input=None, layer_id=None)
+        logging.info("Base Continuation")
+        logging.info(base_continuation)
+        logging.info("")
+        logging.info("Control Continuation")
+        logging.info(control_continuation)
+
 
     model_handler.compute_activations(activations_cache)
 
@@ -141,13 +158,6 @@ def main(cfg: DictConfig) -> None:
             print(f"Warning: Method {method_name} not found in DataAnalyzer.")
 
 
-    if cfg.enable_steering:
-        # Steering
-        logging.info("Running steering")
-        steering_handler = SteeringHandler(cfg, model_handler, data_handler)
-        hidden_layers = model_handler.get_hidden_layers()
-        concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
-        data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
     
     # Activations cache takes up a lot of space, only write if user sets
     # parameter
