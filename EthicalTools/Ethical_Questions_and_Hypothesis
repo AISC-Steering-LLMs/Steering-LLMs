@@ -1,0 +1,32 @@
+
+RH:
+
+# QUESTION: Can we quantify the degree to which a concept is present within a prompt?
+
+(fx. Honesty, Evil, etc...) - Similar to "Ambiguity" measures
+
+Test-hypothesis: If we can identify a good classifier between a concept and its antithesis, the distance to said classier boundary will correlate with the presence of the concept in each prompt
+
+
+# QUESTION: Can we identify if a concept is inherent in another concept?
+
+(fx. Honesty ∈ Integrity ∈ Good) - Generating ethical landscapes by structuring relationships between individual ethical components
+
+Test-hypothesis: If Honesty ∈ Integrity, then we would assume that we would observe overlap of activations from integrity and activations from honesty
+
+
+# QUESTION: Is there a hierarchical structure of ethical concepts, and we manipulate this structure
+
+(fx. saving life > telling the truth)
+
+Test-hypothesis: If one principle is inherently superseding the other, then we the default answers in evaluations should show that. 
+If we can re-arrange this ethical hierarchical structure, we should be able to increase importance of central concepts through activation steering
+
+
+# QUESTION: CAn we assess if and when the "end" justify the means?
+
+(fx. SBF scamming money from clients to save the world through EA-donations)
+
+TEST-HYPOTHESIS: We might need a specific template-structure to run this. Something that includes a CONSEQUENCE of the action:
+
+TEMPLATE-idea: You are doing {A}, which is obviously bad, but {A} leads to {B}, which is for the greate good. You feel good about this, because..
