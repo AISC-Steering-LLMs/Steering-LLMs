@@ -85,56 +85,60 @@ def main(cfg: DictConfig) -> None:
 
 
 
-    # tsne_model = TSNE(n_components=2, random_state=42)
-    # tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
-    # pca_model = PCA(n_components=2, random_state=42)
-    # pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
-    # fa_model = FeatureAgglomeration(n_clusters=2)
-    # fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
+    tsne_model = TSNE(n_components=2, random_state=42)
+    tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
+    pca_model = PCA(n_components=2, random_state=42)
+    pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
+    fa_model = FeatureAgglomeration(n_clusters=2)
+    fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
 
-    # # ToDo: 
-    # # Would be good if our code could just take any valid
-    # # dimensionality reduction method from sci-kit learn.
-    # dimensionality_reduction_map = {
-    #     'pca': PCA,
-    #     'tsne': TSNE,
-    #     'feature_agglomeration': FeatureAgglomeration,
-    #     # Add more mappings as needed
-    # }
-
-    # Mapping of method names to their corresponding classes
-    # This assumes we have these classes imported correctly
-    # at the top of our file
+    # ToDo: 
+    # Would be good if our code could just take any valid
+    # dimensionality reduction method from sci-kit learn.
     dimensionality_reduction_map = {
         'pca': PCA,
         'tsne': TSNE,
-        'feature_agglomeration': FeatureAgglomeration
+        'feature_agglomeration': FeatureAgglomeration,
+        # Add more mappings as needed
     }
 
-    results = {}
-    dim_red_methods = cfg.dim_red.methods
 
-    # Iterate through each method and its configuration
-    for method_name, method_config in dim_red_methods.items():
-        DimRedClass = dimensionality_reduction_map.get(method_name.lower())
+
+    # # Mapping of method names to their corresponding classes
+    # # This assumes we have these classes imported correctly
+    # # at the top of our file
+    # dimensionality_reduction_map = {
+    #     'pca': PCA,
+    #     'tsne': TSNE,
+    #     'feature_agglomeration': FeatureAgglomeration
+    # }
+
+    # results = {}
+    # dim_red_methods = cfg.dim_red.methods
+
+    # # Iterate through each dim red method and its configuration
+    # for method_name, method_config in dim_red_methods.items():
+    #     DimRedClass = dimensionality_reduction_map.get(method_name.lower())
         
-        if not DimRedClass:
-            print(f"{method_name} not found.")
-            continue
+    #     if not DimRedClass:
+    #         print(f"{method_name} not found.")
+    #         continue
         
-        # Instantiate the model with parameters unpacked from method_config
-        model = DimRedClass(**method_config)
+    #     # Instantiate the model with parameters unpacked from method_config
+    #     model = DimRedClass(**method_config)
         
-        # Call the data_analyzer.plot_embeddings method with the model
-        embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, model)
+    #     # Call the data_analyzer.plot_embeddings method with the model
+    #     embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, model)
         
-        # Store results
-        results[method_name] = {
-            'embedded_data_dict': embedded_data_dict,
-            'labels': labels,
-            'prompts': prompts
-        }
+    #     # Store results
+    #     results[method_name] = {
+    #         'embedded_data_dict': embedded_data_dict,
+    #         'labels': labels,
+    #         'prompts': prompts
+    #     }
     
+
+
     classifier_methods = OmegaConf.to_container(cfg.classifiers.methods, resolve=True)
 
     # See if the dimensionality reduction representations can be used to classify the ethical area

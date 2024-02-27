@@ -16,7 +16,6 @@ dim_red:
       n_clusters: 2
 classifiers:
   methods:
-  - logistic_regression
   - decision_tree
   - random_forest
   - svc
