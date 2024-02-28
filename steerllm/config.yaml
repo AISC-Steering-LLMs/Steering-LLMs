@@ -14,21 +14,6 @@ use_gpu: True
 write_cache: False
 enable_steering: True
 
-
-
-############
-# ANALYSIS #
-############
-
-# ToDo: Allow for option to run dimensionality reduction methods with and without classifiers
-# ToDo: Allow for parameters to be set for classifiers
-
-# To not run one of the dimensionality reduction methods, comment it out
-# along with its parameters, eg
-    # pca:
-    #   n_components: 2
-    #   random_state: 42
-
 dim_red:
   methods:
     pca:
@@ -40,12 +25,6 @@ dim_red:
 #     feature_agglomeration:
 #       n_clusters: 2
 
-# To run one of the classifiers, comment it out, eg
-    # logistic_regression:
-# Note that currently all classifiers will be run
-# with all the uncommented dimensionality reduction methods
-# E.g. if pca, tsne, and feature_agglomeration are uncommented,
-# then each classifiers will be run for each of them.
 
 classifiers:
   methods:
