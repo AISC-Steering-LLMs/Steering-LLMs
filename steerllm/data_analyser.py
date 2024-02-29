@@ -143,7 +143,7 @@ class DataAnalyzer:
         """
         df = pd.DataFrame(embedded_data, columns=["X", "Y"])
         df["Ethical Area"] = labels
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 8), dpi=300)
         sns.scatterplot(x='X', y='Y', hue='Ethical Area', palette='viridis', data=df)
         plot_path = os.path.join(self.images_dir, f"{plot_title.lower()}_plot_layer_{layer}.png")
         plt.savefig(plot_path)

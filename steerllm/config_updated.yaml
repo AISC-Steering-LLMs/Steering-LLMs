@@ -1,6 +1,6 @@
-model_name: gpt2-small
+model_name: meta-llama/Llama-2-7b-hf
 experiment_notes: Trying Eleni honesty contrastive with because.
-prompts_sheet: ../data/inputs/prompts/pairs_v1/generated_datasets/honesty_combined_dataset_fully_labelled.csv
+prompts_sheet: ../data/inputs/honesty_contrastive_formatted_final.csv
 use_gpu: true
 write_cache: false
 enable_steering: true
@@ -17,4 +17,4 @@ other_dim_red_analyses:
   - random_projections_analysis
 non_dimensionality_reduction:
   methods:
-  - raster_plot
+  - probe_hidden_states
