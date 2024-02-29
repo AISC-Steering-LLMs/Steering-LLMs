@@ -19,21 +19,21 @@ dim_red:
     pca:
       n_components: 2
       random_state: 42
-#     tsne:
-#       n_components: 2
-#       perplexity: 30
-#     feature_agglomeration:
-#       n_clusters: 2
+    tsne:
+      n_components: 2
+      perplexity: 30
+    feature_agglomeration:
+      n_clusters: 2
 
 
 classifiers:
   methods:
     - logistic_regression
-#     - decision_tree
-#     - random_forest
-#     - svc
-#     - knn
-#     - gradient_boosting
+    - decision_tree
+    - random_forest
+    - svc
+    - knn
+    - gradient_boosting
 
 other_dim_red_analyses:
   methods:
@@ -41,5 +41,5 @@ other_dim_red_analyses:
 
 non_dimensionality_reduction:
   methods:
-    # - raster_plot
+    - raster_plot
     - probe_hidden_states
