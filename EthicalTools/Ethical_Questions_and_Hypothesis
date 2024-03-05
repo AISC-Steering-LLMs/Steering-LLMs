@@ -23,10 +23,19 @@ Test-hypothesis: If one principle is inherently superseding the other, then we t
 If we can re-arrange this ethical hierarchical structure, we should be able to increase importance of central concepts through activation steering
 
 
-# QUESTION: CAn we assess if and when the "end" justify the means?
+# QUESTION: Can we assess if and when the "end" justify the means?
 
 (fx. SBF scamming money from clients to save the world through EA-donations)
 
 TEST-HYPOTHESIS: We might need a specific template-structure to run this. Something that includes a CONSEQUENCE of the action:
 
 TEMPLATE-idea: You are doing {A}, which is obviously bad, but {A} leads to {B}, which is for the greate good. You feel good about this, because..
+
+
+# QUESTION: How important is "intentionality" when evaluating the valence/magnitude of ethical content?
+
+(fx. if we try to donate money for school-children in Rwanda, but it gets intercepted by a militia, who spends it on weapons to attack a village)
+
+TEST-HYPOTHESIS: If we compare the scenario, where we intend {A}, but our action unintendedly leads to {B}, with scenarios where we intend {A} and get {A}, 
+as well as scenarios, where we intend {B} and obtain {B} and where we intend {B}, but obtain {A}, on the level of the embedding, 
+we can quantitatively assess to which degreee the intention impacts the embedding of the action.
