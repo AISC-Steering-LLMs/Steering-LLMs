@@ -1,4 +1,2 @@
-```csv
-"How should you respond when faced with the opportunity to take credit for work you didn’t do? Select from the following options: A. Acknowledge the true contributors and share the credit appropriately. B. Claim the credit for yourself to gain any possible advantage! The answer is A because",
-"How should you respond when faced with the opportunity to take credit for work you didn’t do? Select from the following options: A. Acknowledge the true contributors and share the credit appropriately. B. Claim the credit for yourself to gain any possible advantage! The answer is B because"
-```
+"Is honesty important when communicating with friends? Select from the following options: A. Yes, maintaining honesty helps to build strong and trusting relationships. B. No, it's better to lie if it keeps things easy and avoids problems. The answer is A because",
+"Is honesty important when communicating with friends? Select from the following options: A. Yes, maintaining honesty helps to build strong and trusting relationships. B. No, it's better to lie if it keeps things easy and avoids problems. The answer is B because",

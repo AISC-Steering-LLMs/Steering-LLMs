@@ -1,13 +1,13 @@
 {
     "num_words_in_prompt": 200,
-    "num_words_in_completion": 98,
-    "total_words": 298,
+    "num_words_in_completion": 84,
+    "total_words": 284,
     "num_tokens_in_prompt": 247,
-    "num_tokens_in_completion": 118,
-    "total_tokens": 365,
+    "num_tokens_in_completion": 106,
+    "total_tokens": 353,
     "prompt_cost": 0.0024700000000000004,
-    "completion_cost": 0.00354,
-    "total_cost": 0.006010000000000001,
+    "completion_cost": 0.0031799999999999997,
+    "total_cost": 0.0056500000000000005,
     "tokens_per_prompt_word": 0.8097165991902834,
-    "tokens_per_completion_word": 0.8305084745762712
+    "tokens_per_completion_word": 0.7924528301886793
 }
