@@ -1,4 +1,5 @@
 import os
+import re
 import gc
 from functools import partial
 import pickle
@@ -131,6 +132,68 @@ class ModelHandler:
                 )]
             )
 
+
+    def compute_continuation(self, max_new_tokens=256, input=""):
+        """
+        Computes the continuation of a given input text up to a maximum number of new tokens.
+
+        This method generates text by iteratively predicting the next token based on the input text and
+        previously generated tokens. The generation process stops when either the maximum number of new tokens
+        is reached or an end-of-sequence token is generated.
+
+        Parameters
+        ----------
+        max_new_tokens : int, optional
+            The maximum number of new tokens to generate, by default 256.
+        input : str, optional
+            The initial input text to continue from.
+
+        Returns
+        -------
+        str
+            The generated text continuation.
+        """
+
+        print("input", input)
+
+        output = ""
+
+        for _ in tqdm(range(max_new_tokens), desc="Computing Continuation"):
+
+            logits = self.model(input+output, return_type="logits")
+            next_token = self.model.tokenizer.batch_decode(logits.argmax(dim=-1)[0])
+            output += next_token[-1]
+
+            if next_token[-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
+                break
+
+        return output
+
+    def compute_altered_continuation(self, max_new_tokens=256, input="", activations=None, pattern_hook_names_filter=None, act_patching_hook=None):
+        print("input", input)
+
+        output = ""
+        for _ in tqdm(range(max_new_tokens), desc="Computing Continuation"):
+
+            logits = self.model.run_with_hooks(
+                            input+output,
+                            return_type="logits",
+                            fwd_hooks=[(
+                                pattern_hook_names_filter,
+                                act_patching_hook
+                            )]
+                        )
+
+            next_token = self.model.tokenizer.batch_decode(logits.argmax(dim=-1)[0])
+            output += next_token[-1]
+
+            if next_token[-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
+                break
+
+        return output
+
+
+
     def reset_activations(self, activations_cache: list[Activation]) -> None:
         """
         Resets the hidden states of each activation in the activations cache.
@@ -150,6 +213,7 @@ class ModelHandler:
 
     def get_hidden_layers(self) -> list[int]:
         return list(range(-1, -self.model.cfg.n_layers, -1))
+        # return list(range(0, self.model.cfg.n_layers, -1))
 
     @staticmethod
     def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:

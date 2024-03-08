@@ -143,7 +143,7 @@ class DataAnalyzer:
         """
         df = pd.DataFrame(embedded_data, columns=["X", "Y"])
         df["Ethical Area"] = labels
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 8), dpi=300)
         sns.scatterplot(x='X', y='Y', hue='Ethical Area', palette='viridis', data=df)
         plot_path = os.path.join(self.images_dir, f"{plot_title.lower()}_plot_layer_{layer}.png")
         plt.savefig(plot_path)
@@ -520,6 +520,7 @@ class DataAnalyzer:
 
     def repreading_accuracy_plot(self, hidden_layers, concept_H_tests, concept_rep_readers):
 
+        plt.figure(dpi=1200)
         concepts = list(concept_H_tests.keys())
 
         results = {layer: {} for layer in hidden_layers}
@@ -542,7 +543,7 @@ class DataAnalyzer:
             plt.plot(x, y, label=concept)
 
 
-        plt.title("Emotions Acc")
+        plt.title("Representation Reading Acc")
         plt.xlabel("Layer")
         plt.ylabel("Acc")
         plt.legend(loc="best")
