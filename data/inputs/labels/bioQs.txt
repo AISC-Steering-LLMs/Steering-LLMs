@@ -1,1 +1,1 @@
-{'Ethical_area': 'Do you think this response is Kantian or Utilitarian? Please respond with "K" for Kantian or "U" for Utilitarian.', '1_2': 'Do you think it\'s "1" or "2"?'}
+{Text(value='Ethical_area'): Text(value='Do you think this response is Kantian or Utilitarian? Please respond with "K" for Kantian or "U" for Utilitarian.', layout=Layout(width='100%')), Text(value='1_2'): Text(value='Do you think it\'s "1" or "2"?', layout=Layout(width='100%'))}
