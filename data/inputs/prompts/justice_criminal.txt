@@ -1,0 +1,1 @@
+Please generate a sentence that embodies the concept of justice, or the opposite of justice in the context of the criminal justice system, choosing either with 50% probability. Only write this sentence and nothing else.
