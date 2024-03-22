@@ -11,20 +11,19 @@ model_name: "gpt2-small"
 experiment_notes: "Trying Eleni honesty contrastive with because."
 prompts_sheet: "../data/inputs/honesty_contrastive_formatted_final.csv"
 use_gpu: True
-write_cache: False
-enable_steering: True
+write_cache: True
+enable_steering: False
 
 dim_red:
   methods:
     pca:
       n_components: 2
       random_state: 42
-    tsne:
-      n_components: 2
-      perplexity: 30
-    feature_agglomeration:
-      n_clusters: 2
-
+    # tsne:
+    #   n_components: 2
+    #   perplexity: 30
+    # feature_agglomeration:
+    #   n_clusters: 2
 
 classifiers:
   methods:

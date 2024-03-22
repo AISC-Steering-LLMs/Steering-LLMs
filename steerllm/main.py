@@ -83,110 +83,126 @@ def main(cfg: DictConfig) -> None:
 
     model_handler.compute_activations(activations_cache)
 
+    # Activations cache takes up a lot of space, only write if user sets
+    # parameter
+
+    if cfg.write_cache:
+        logging.info("Saving activations")
+        model_handler.write_activations_cache(activations_cache, experiment_base_dir)
+
+        print("type(activations_cache)", type(activations_cache))
+        print("len(activations_cache): ", len(activations_cache))
+        print("type(activations_cache[0])", type(activations_cache[0]))
+        # print("activation_cache[0]: ", activations_cache[0])
+        print("Prompt:", activations_cache[0].prompt)
+        print("Ethical Area:", activations_cache[0].ethical_area)
+        print("Positive:", activations_cache[0].positive)
+        print("Raw Activations:", activations_cache[0].raw_activations)
+        print("Raw Activations:", type(activations_cache[0].raw_activations))
+        print("Hidden States:", type(activations_cache[0].hidden_states))
+        print("Hidden States:", len(activations_cache[0].hidden_states))
+        print("Hidden States:", type(activations_cache[0].hidden_states[0]))
+        print("Hidden States:", len(activations_cache[0].hidden_states[0]))
 
 
-    tsne_model = TSNE(n_components=2, random_state=42)
-    tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
-    pca_model = PCA(n_components=2, random_state=42)
-    pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
-    fa_model = FeatureAgglomeration(n_clusters=2)
-    fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
+    # tsne_model = TSNE(n_components=2, random_state=42)
+    # tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
+    # pca_model = PCA(n_components=2, random_state=42)
+    # pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
+    # fa_model = FeatureAgglomeration(n_clusters=2)
+    # fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
 
-    # ToDo: 
-    # Would be good if our code could just take any valid
-    # dimensionality reduction method from sci-kit learn.
-    dimensionality_reduction_map = {
-        'pca': PCA,
-        'tsne': TSNE,
-        'feature_agglomeration': FeatureAgglomeration,
-        # Add more mappings as needed
-    }
-
-
-
-    # # Mapping of method names to their corresponding classes
-    # # This assumes we have these classes imported correctly
-    # # at the top of our file
+    # # ToDo: 
+    # # Would be good if our code could just take any valid
+    # # dimensionality reduction method from sci-kit learn.
     # dimensionality_reduction_map = {
     #     'pca': PCA,
     #     'tsne': TSNE,
-    #     'feature_agglomeration': FeatureAgglomeration
+    #     'feature_agglomeration': FeatureAgglomeration,
+    #     # Add more mappings as needed
     # }
 
-    # results = {}
-    # dim_red_methods = cfg.dim_red.methods
 
-    # # Iterate through each dim red method and its configuration
-    # for method_name, method_config in dim_red_methods.items():
-    #     DimRedClass = dimensionality_reduction_map.get(method_name.lower())
+
+    # # # Mapping of method names to their corresponding classes
+    # # # This assumes we have these classes imported correctly
+    # # # at the top of our file
+    # # dimensionality_reduction_map = {
+    # #     'pca': PCA,
+    # #     'tsne': TSNE,
+    # #     'feature_agglomeration': FeatureAgglomeration
+    # # }
+
+    # # results = {}
+    # # dim_red_methods = cfg.dim_red.methods
+
+    # # # Iterate through each dim red method and its configuration
+    # # for method_name, method_config in dim_red_methods.items():
+    # #     DimRedClass = dimensionality_reduction_map.get(method_name.lower())
         
-    #     if not DimRedClass:
-    #         print(f"{method_name} not found.")
-    #         continue
+    # #     if not DimRedClass:
+    # #         print(f"{method_name} not found.")
+    # #         continue
         
-    #     # Instantiate the model with parameters unpacked from method_config
-    #     model = DimRedClass(**method_config)
+    # #     # Instantiate the model with parameters unpacked from method_config
+    # #     model = DimRedClass(**method_config)
         
-    #     # Call the data_analyzer.plot_embeddings method with the model
-    #     embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, model)
+    # #     # Call the data_analyzer.plot_embeddings method with the model
+    # #     embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, model)
         
-    #     # Store results
-    #     results[method_name] = {
-    #         'embedded_data_dict': embedded_data_dict,
-    #         'labels': labels,
-    #         'prompts': prompts
-    #     }
+    # #     # Store results
+    # #     results[method_name] = {
+    # #         'embedded_data_dict': embedded_data_dict,
+    # #         'labels': labels,
+    # #         'prompts': prompts
+    # #     }
     
 
 
-    classifier_methods = OmegaConf.to_container(cfg.classifiers.methods, resolve=True)
+    # classifier_methods = OmegaConf.to_container(cfg.classifiers.methods, resolve=True)
 
-    # See if the dimensionality reduction representations can be used to classify the ethical area
-    # Why are we actually doing this? Hypothesis - better seperation of ethical areas
-    # Leads to better steering vectors. This actually needs to be tested.
-    for method_name, method_config in cfg.dim_red.methods.items():
-        if method_name in dimensionality_reduction_map:
-            # Prepare kwargs by converting OmegaConf to a native Python dict
-            kwargs = OmegaConf.to_container(method_config, resolve=True)
-            dr_class = dimensionality_reduction_map[method_name]
-            dr_instance = dr_class(**kwargs)
-            embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, dr_instance)
-            # Now X_transformed can be used for further analysis or classification
-            data_analyzer.classifier_battery(classifier_methods, embedded_data_dict, labels, prompts, dr_instance, 0.2)
-        else:
-            logging.warning(f"Warning: {method_name} is not a valid dimension reduction method or is not configured.")
+    # # See if the dimensionality reduction representations can be used to classify the ethical area
+    # # Why are we actually doing this? Hypothesis - better seperation of ethical areas
+    # # Leads to better steering vectors. This actually needs to be tested.
+    # for method_name, method_config in cfg.dim_red.methods.items():
+    #     if method_name in dimensionality_reduction_map:
+    #         # Prepare kwargs by converting OmegaConf to a native Python dict
+    #         kwargs = OmegaConf.to_container(method_config, resolve=True)
+    #         dr_class = dimensionality_reduction_map[method_name]
+    #         dr_instance = dr_class(**kwargs)
+    #         embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, dr_instance)
+    #         # Now X_transformed can be used for further analysis or classification
+    #         data_analyzer.classifier_battery(classifier_methods, embedded_data_dict, labels, prompts, dr_instance, 0.2)
+    #     else:
+    #         logging.warning(f"Warning: {method_name} is not a valid dimension reduction method or is not configured.")
 
-    # Other dimensionality reduction related analysis
-    logging.info("Running other dimensionality reduction related analysis")
+    # # Other dimensionality reduction related analysis
+    # logging.info("Running other dimensionality reduction related analysis")
 
-    for method_name in cfg.other_dim_red_analyses.methods:
-        if hasattr(data_analyzer, method_name):
-            getattr(data_analyzer, method_name)(activations_cache)
-        else:
-            print(f"Warning: Method {method_name} not found in DataAnalyzer.")
+    # for method_name in cfg.other_dim_red_analyses.methods:
+    #     if hasattr(data_analyzer, method_name):
+    #         getattr(data_analyzer, method_name)(activations_cache)
+    #     else:
+    #         print(f"Warning: Method {method_name} not found in DataAnalyzer.")
 
-    # Further analysis not based on dimensionality reduction
-    logging.info("Running further analysis not based on dimensionality reduction")
+    # # Further analysis not based on dimensionality reduction
+    # logging.info("Running further analysis not based on dimensionality reduction")
 
-    for method_name in cfg.non_dimensionality_reduction.methods:
-        if hasattr(data_analyzer, method_name):
-            getattr(data_analyzer, method_name)(activations_cache)
-        else:
-            print(f"Warning: Method {method_name} not found in DataAnalyzer.")
+    # for method_name in cfg.non_dimensionality_reduction.methods:
+    #     if hasattr(data_analyzer, method_name):
+    #         getattr(data_analyzer, method_name)(activations_cache)
+    #     else:
+    #         print(f"Warning: Method {method_name} not found in DataAnalyzer.")
 
 
-    if cfg.enable_steering:
-        # Steering
-        logging.info("Running steering")
-        steering_handler = SteeringHandler(cfg, model_handler, data_handler)
-        hidden_layers = model_handler.get_hidden_layers()
-        concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
-        data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
-    
-    # Activations cache takes up a lot of space, only write if user sets
-    # parameter
-    if cfg.write_cache:
-        model_handler.write_activations_cache(activations_cache, experiment_base_dir)
+    # if cfg.enable_steering:
+    #     # Steering
+    #     logging.info("Running steering")
+    #     steering_handler = SteeringHandler(cfg, model_handler, data_handler)
+    #     hidden_layers = model_handler.get_hidden_layers()
+    #     concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
+    #     data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
+
 
 
 
