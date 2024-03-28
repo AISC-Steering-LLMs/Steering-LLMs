@@ -11,7 +11,11 @@ from jinja2 import Environment, FileSystemLoader
 class NotebookHelper:
     def __init__(self, api_key=None, template_dir='../data/inputs/templates', output_dir='../data/inputs/prompts'):
         
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        print(api_key)
+        if api_key == "your_openai_api_key_here":
+            self.api_key = os.environ.get("OPENAI_API_KEY", "")
+        else:
+            self.api_key = api_key
         self.client = OpenAI(api_key=self.api_key)
         self.model_options = ['gpt-4-0125-preview', 'gpt-4', 'gpt-3.5-turbo']
         self.model = 'gpt-4'
@@ -29,6 +33,7 @@ class NotebookHelper:
         import os
         os.environ["OPENAI_API_KEY"] = api_key
         self.api_key = api_key
+        self.client = OpenAI(api_key=self.api_key)
         print("API key saved to environment variables.")
     
     def set_model(self, model):
