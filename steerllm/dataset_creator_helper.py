@@ -81,6 +81,7 @@ class NotebookHelper:
         print(f"Filename: {self.filename}.csv")
         print(f"Total Number of Examples: {self.total_examples}")
         print(f"Examples per Request: {self.examples_per_request}")
+        print("----------")
 
 
 
@@ -102,9 +103,11 @@ class NotebookHelper:
         """Save the template content to the specified file path."""
         import os
         if not overwrite and os.path.exists(file_path):
+            print("Doesn't have permission to overwrite existing file.")
             return False
         with open(file_path, 'w') as f:
             f.write(content)
+            print(f"Text saved as {file_path}")
         return True
 
     def save_rendered_content(self, file_path, rendered_text, overwrite=False):
