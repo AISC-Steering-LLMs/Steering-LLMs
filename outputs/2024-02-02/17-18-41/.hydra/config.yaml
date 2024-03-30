@@ -1,5 +1,0 @@
-model_name: gpt2-small
-experiment_notes: Adding Hydra library for experiment configuration.
-prompts_sheet: ../data/inputs/prompts_good_evil_justice.xlsx
-use_gpu: false
-write_cache: false
