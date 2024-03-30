@@ -1,0 +1,33 @@
+[2024-03-29 23:16:43,062][root][INFO] - Creating model handler to load the model
+Loaded pretrained model gpt2-small into HookedTransformer
+[2024-03-29 23:16:44,684][root][INFO] - Processing data
+[2024-03-29 23:16:44,690][root][INFO] - Getting activations
+[2024-03-29 23:16:45,188][root][INFO] - Right now, we can only compute activations with non-steered model
+[2024-03-29 23:16:54,920][root][INFO] - Running steering
+Computing Reading Directions: 100%|██████████████████████████████████████████| 2/2 [00:46<00:00, 23.44s/it]
+[2024-03-29 23:17:44,721][root][INFO] - Runing Control Pipeline
+input What role does honesty play in building trust in a relationship? Definitely by withholding information to avoid conflict because,
+Computing Continuation: 100%|████████████████████████████████████████████| 256/256 [00:52<00:00,  4.87it/s]
+input What role does honesty play in building trust in a relationship? Definitely by withholding information to avoid conflict because,
+Computing Continuation: 100%|████████████████████████████████████████████| 256/256 [02:48<00:00,  1.52it/s]
+[2024-03-29 23:21:26,324][root][INFO] - Base Continuation
+[2024-03-29 23:21:26,324][root][INFO] -  as a result, you may be perceived as a liar.
+
+
+The truth is, honesty is not a skill. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by the individual. It is a skill that is learned and developed by
+[2024-03-29 23:21:26,324][root][INFO] -
+[2024-03-29 23:21:26,324][root][INFO] - Control Continuation
+[2024-03-29 23:21:26,324][root][INFO] -  of course, it's a bad thing.
+
+
+But if you want to know more about what you can do to help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help your partner, or how you can help them, or how you can help them, or how you can help them, or how you can help them, or how you can help them, or how you can help them, or how you can help them, or how you can't know more than what you can't know more than what you can't know more than what you can't know more than what you can't know more than what you can't know more than what you can't know more than what you can't know more than what you can't do better than what you
+TSNE: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:07<00:00,  1.70it/s]
+PCA: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:03<00:00,  3.17it/s]
+FeatureAgglomeration: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:03<00:00,  3.57it/s]
+TSNE: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:07<00:00,  1.70it/s]
+Computing TSNE knn:   0%|                                                                                                                                                                            | 0/12 [00:00<?, ?it/s]
+[2024-03-29 23:21:47,785][root][WARNING] - Classifier knn not found in the current list of allowed classifiers or has been incorrectly handled.
+[2024-03-29 23:21:47,785][root][INFO] - Running other dimensionality reduction related analysis
+Random projections analysis: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:00<00:00, 2017.54it/s]
+[2024-03-29 23:21:47,791][root][INFO] - Running further analysis not based on dimensionality reduction
+Probing hidden states: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:02<00:00,  4.72it/s]

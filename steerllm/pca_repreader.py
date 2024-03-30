@@ -17,11 +17,11 @@ class RepReader():
         self.model_handler = model_handler
 
     def recenter(self, x, mean=None):
-        x = torch.Tensor(x).cuda()
+        x = torch.Tensor(x)
         if mean is None:
-            mean = torch.mean(x,axis=0,keepdims=True).cuda()
+            mean = torch.mean(x,axis=0,keepdims=True)
         else:
-            mean = torch.Tensor(mean).cuda()
+            mean = torch.Tensor(mean)
         return x - mean
 
     def project_onto_direction(self, H, direction):
@@ -29,7 +29,7 @@ class RepReader():
         # Calculate the magnitude of the direction vector
         # Ensure H and direction are on the same device (CPU or GPU)
         if type(direction) != torch.Tensor:
-            H = torch.Tensor(H).cuda()
+            H = torch.Tensor(H)
         if type(direction) != torch.Tensor:
             direction = torch.Tensor(direction)
             direction = direction.to(H.device)

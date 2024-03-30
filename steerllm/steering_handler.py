@@ -177,6 +177,7 @@ class SteeringHandler:
         # self._validate_params(n_difference, direction_method)
 
         # initialize a DirectionFinder
+        # TODO: Add other direction_finders, make it changable by cfg input
         direction_finder = PCARepReader(model_handler=self.model_handler)
 
         # if relevant, get the hidden state data for training set
