@@ -8,9 +8,15 @@ class UIHelper:
         self.nh = notebook_helper
 
     def create_api_key_input(self):
+
+        label = widgets.Label(
+            value='Enter your OpenAI API key if you did not set it in the cell above or in your environment variables, otherwise leave it blank:',
+            style={'description_width': 'initial'}
+        )
+        
         api_key_input = widgets.Text(
             value=self.nh.api_key,
-            description='Enter your OpenAI API key:',
+            description='Enter your OpenAI API key (min length 3):',
             disabled=False,
             style={'description_width': 'initial'}
         )
@@ -79,15 +85,18 @@ class UIHelper:
 
     def create_reset_button(self):
         reset_button = widgets.Button(description="Reset")
-        reset_button.on_click(lambda _: 
-                              self.nh.reset_values(
-                                  self.model_dropdown,
-                                  self.temperature_input,
-                                  self.filename_input,
-                                  self.total_examples_input,
-                                  self.examples_per_request_input
-        ))
+        reset_button.on_click(self.on_reset_click)
+
         return reset_button
+    
+    def on_reset_click(self, _):
+        default_values = self.nh.reset_values()
+
+        self.model_dropdown.value = default_values['model']
+        self.temperature_input.value = default_values['temperature']
+        self.filename_input.value = default_values['filename']
+        self.total_examples_input.value = default_values['total_examples']
+        self.examples_per_request_input.value = default_values['examples_per_request']
 
     def on_submit_click(self, button):
         model = self.model_dropdown.value

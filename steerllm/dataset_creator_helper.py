@@ -34,7 +34,7 @@ class NotebookHelper:
         os.environ["OPENAI_API_KEY"] = api_key
         self.api_key = api_key
         self.client = OpenAI(api_key=self.api_key)
-        print("API key saved to environment variables.")
+        print(f"API key \"{self.api_key[:3]}...\" saved to environment variables.")
     
     def set_model(self, model):
         if model in self.model_options:
@@ -58,29 +58,34 @@ class NotebookHelper:
         self.examples_per_request = examples
         
     def reset_values(self):
-        self.model = 'gpt-4'
-        self.temperature = 1.0
-        self.filename = 'justice'
-        self.total_examples = 100
-        self.examples_per_request = self.total_examples
-        print("Values reset to default.")
 
-    def update_settings(self, model=None, temperature=None, filename=None, total_examples=None, examples_per_request=None):
-        """Update NotebookHelper settings based on user inputs."""
-        if model is not None and model in self.model_options:
-            self.model = model
-        if temperature is not None:
-            self.set_temperature(temperature)  # Assuming set_temperature validates the input
-        if filename is not None:
-            self.filename = filename
-        if total_examples is not None:
-            self.total_examples = total_examples
-        if examples_per_request is not None:
-            self.examples_per_request = examples_per_request
+        default_values = {
+            'model': 'gpt-4',
+            'temperature': 1.0,
+            'filename': 'new_template',
+            'total_examples': 100,
+            'examples_per_request': 100
+        }
+        self.update_settings(**default_values)
+        return default_values
+
+    def update_settings(self, **kwargs):
+        """Update internal values based on user inputs."""
+        for key, value in kwargs.items():
+            if key == 'model' and value in self.model_options:
+                self.model = value
+            elif key == 'temperature':
+                self.set_temperature(value)
+            elif key == 'filename':
+                self.filename = value
+            elif key == 'total_examples':
+                self.total_examples = value
+            elif key == 'examples_per_request':
+                self.examples_per_request = value
 
     def print_settings(self):
         print("Entered information:")
-        print(f"Client: {self.client}")
+        print(f"API Key: {self.api_key[:3]}...")
         print(f"OpenAI Model: {self.model}")
         print(f"Temperature: {self.temperature}")
         print(f"Filename: {self.filename}.csv")
