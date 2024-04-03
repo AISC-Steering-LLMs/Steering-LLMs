@@ -2,6 +2,9 @@ import ipywidgets as widgets
 from IPython.display import display, HTML, clear_output
 from ipywidgets import Output
 
+from ipywidgets import HTML, Label, Dropdown, Textarea, Text, Button, Output, VBox, HBox, Layout
+from IPython.display import display
+
 
 class UIHelper:
     def __init__(self, notebook_helper):
@@ -149,7 +152,7 @@ class UIHelper:
     def create_save_button(self):
         """Create a button widget for saving the template."""
         button = widgets.Button(description='Save')
-        button.on_click(self.nh.save_template)
+        button.on_click(self.save_template)
         return button
 
     def create_use_button(self):
@@ -157,6 +160,25 @@ class UIHelper:
         button = widgets.Button(description='Use Template')
         button.on_click(self.nh.use_template)
         return button
+    
+    def save_template(self, _):
+        """Save the template content to a file."""
+        content = self.template_content_input.value
+        filename = self.filename_input.value
+        warning = self.nh.save_template(content, filename)
+        if warning:
+            with self.save_warning_output:
+                print(warning)
+        else:
+            with self.success_output:
+                print(f'Template saved as "{filename}.j2"')
+            
+        self.update_template_dropdown()
+    
+    def update_template_dropdown(self):
+        """Update the template dropdown options."""
+        templates = self.nh.load_templates()
+        self.template_dropdown.options = templates
         
     def create_template_manager(self):
         display(HTML('''
@@ -169,9 +191,9 @@ class UIHelper:
         </style>
         '''))
 
-        template_dropdown = self.create_template_dropdown()
-        template_content_input = self.create_template_content_input()
-        filename_input = self.create_filename_input()
+        self.template_dropdown = self.create_template_dropdown()
+        self.template_content_input = self.create_template_content_input()
+        self.filename_input = self.create_filename_input()
         save_button = self.create_save_button()
         use_button = self.create_use_button()
         self.save_warning_output = Output()
@@ -181,11 +203,11 @@ class UIHelper:
         input_layout = widgets.VBox([
             widgets.Label(value='Template Manager', style={'font_weight': 'bold', 'font_size': '18px'}),
             widgets.Label(value='Create a new template, or select/modify an existing one.'),
-            template_dropdown,
+            self.template_dropdown,
             widgets.Label(value='Edit the template content:'),
-            template_content_input,
+            self.template_content_input,
             widgets.Label(value="If you have created a new template or modified an existing one, enter a name for it here. Skip this step if you're directly using an existing template without modifying it."),
-            filename_input,
+            self.filename_input,
         ])
 
         save_button_layout = widgets.HBox([save_button])
@@ -212,4 +234,40 @@ class UIHelper:
         main_layout = widgets.VBox([input_layout, button_layout, output_layout], layout=widgets.Layout(width='auto'))
         display(main_layout)
 
-        template_dropdown.observe(self.nh.load_template_content, names='value')
+        def on_template_selected(change):
+            template_content = self.nh.load_template_content(change)
+            self.template_content_input.value = template_content
+
+        self.template_dropdown.observe(on_template_selected, names='value')
+
+    def create_template_form(self, variables, template_name):
+        """Create a form for filling in template variables."""
+        self.template_name = template_name
+        load_form = VBox()
+        self.placeholders = {}
+        for var in variables:
+            placeholder_input = Text(
+                description=f'Enter value for "{var}":',
+                layout=Layout(width='auto', min_width='200px'),
+                style={'description_width': 'initial'}
+            )
+            load_form.children += (placeholder_input,)
+            self.placeholders[var] = placeholder_input
+        self.output_filename_input = Text(
+            description='Enter a filename to save the template with these values (e.g. my_prompt):',
+            layout=Layout(width='auto', min_width='200px'),
+            style={'description_width': 'initial'})
+        load_form.children += (self.output_filename_input,)
+        render_button = Button(description='Save and Render')
+        self.render_warning_output = Output()
+        warning_and_buttons_layout = VBox([
+            render_button,
+            self.render_warning_output
+        ])
+        load_form.children += (warning_and_buttons_layout,)
+        # Apply CSS styling to the form container
+        load_form.layout.width = '100%'
+        load_form.layout.min_width = '400px'
+        load_form.add_class('my-form')
+        display(load_form)
+        render_button.on_click(self.nh.on_render_and_save)

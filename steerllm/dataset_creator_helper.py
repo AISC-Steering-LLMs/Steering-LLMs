@@ -5,6 +5,44 @@ import time
 
 from openai import OpenAI
 from jinja2 import Environment, FileSystemLoader
+
+import csv
+import json
+import math
+import os
+import re
+import time
+from IPython import get_ipython
+from IPython.display import display, HTML, clear_output
+from ipywidgets import (
+    Button,
+    Checkbox,
+    Dropdown,
+    FloatText,
+    HBox,
+    IntText,
+    Label,
+    Layout,
+    Output,
+    SelectMultiple,
+    Text,
+    Textarea,
+    VBox,
+    interactive,
+    interact,
+    interact_manual,
+    fixed,
+    widgets,
+)
+from jinja2 import Environment, FileSystemLoader, meta
+from hydra import initialize
+from hydra.core.global_hydra import GlobalHydra
+from hydra.experimental import compose
+from omegaconf import DictConfig, OmegaConf
+from openai import OpenAI
+import pandas as pd
+import yaml
+
         
 
 
@@ -16,6 +54,9 @@ class NotebookHelper:
             self.api_key = os.environ.get("OPENAI_API_KEY", "")
         else:
             self.api_key = api_key
+
+        print(f"Using api_key {self.api_key[:3]}... Update below if incorrect.")
+
         self.client = OpenAI(api_key=self.api_key)
         self.model_options = ['gpt-4-0125-preview', 'gpt-4', 'gpt-3.5-turbo']
         self.model = 'gpt-4'
@@ -123,6 +164,57 @@ class NotebookHelper:
     def save_rendered_content(self, file_path, rendered_text, overwrite=False):
         """Save the rendered text to the specified file path."""
         return self.save_template_content(file_path, rendered_text, overwrite)
+    
+    def load_template_content(self, change):
+        """Load the content of the selected template into the template content input."""
+        template_name = change['new'] + '.j2'
+        template_path = os.path.join(self.template_dir, template_name)
+        with open(template_path, 'r') as f:
+            template_content = f.read()
+        return template_content
+
+    def save_template(self, content, filename):
+        """Save the template content to a file."""
+        # Replace any file extension from the text, if existent, with .j2
+        new_filename = filename.split('.')[0] + '.j2'
+        new_template_path = os.path.join(self.template_dir, new_filename)
+
+        if new_filename == "blank_template.j2":
+                return f'Cannot overwrite the "blank_template.j2" file.'
+        elif os.path.exists(new_template_path):
+            return f'File "{new_filename}" already exists. Do you want to overwrite it?'
+        else:
+            self.save_template_content(new_template_path, content)
+            return None
+           
+    def use_template(self, template_name):
+        """Use the selected template and prompt the user to fill in the template variables."""
+        template_source = self.env.loader.get_source(self.env, template_name)[0]
+        parsed_content = self.env.parse(template_source)
+        variables = meta.find_undeclared_variables(parsed_content)
+        return variables
+
+    def on_render_and_save(self, button):
+        """Render the template with the provided user input and globally save the rendered text."""
+        rendered_text = self.render_and_save(button)
+        if rendered_text is not None:
+            # Assign the rendered_text to a variable in the global scope using globals()
+            globals()['rendered_prompt'] = rendered_text
+
+    def render_and_save(self, placeholder_values, output_filename):
+        """Render the template with the provided user input and save the rendered text to a file."""
+
+        rendered_text = self.render_template(self.ui.template_name, placeholder_values)
+        # Remove any existing file extension from the output filename
+        output_path = os.path.join(self.output_dir, output_filename)
+
+        if os.path.exists(output_path):
+            return f'File "{output_filename}.txt" already exists. Do you want to overwrite it?'
+        else:
+            self.save_rendered_content(output_path, rendered_text)
+            return None
+    
+
     
 
 class DatasetGenerator:
