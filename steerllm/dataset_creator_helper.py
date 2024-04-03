@@ -1,39 +1,8 @@
 import os
 import json
 import math
-import time
 
 from openai import OpenAI
-from jinja2 import Environment, FileSystemLoader
-
-import csv
-import json
-import math
-import os
-import re
-import time
-from IPython import get_ipython
-from IPython.display import display, HTML, clear_output
-from ipywidgets import (
-    Button,
-    Checkbox,
-    Dropdown,
-    FloatText,
-    HBox,
-    IntText,
-    Label,
-    Layout,
-    Output,
-    SelectMultiple,
-    Text,
-    Textarea,
-    VBox,
-    interactive,
-    interact,
-    interact_manual,
-    fixed,
-    widgets,
-)
 from jinja2 import Environment, FileSystemLoader, meta
 from hydra import initialize
 from hydra.core.global_hydra import GlobalHydra
@@ -49,12 +18,7 @@ import yaml
 class NotebookHelper:
     def __init__(self, api_key=None, template_dir='../data/inputs/templates', output_dir='../data/inputs/prompts'):
         
-        print(api_key)
-        if api_key == "your_openai_api_key_here":
-            self.api_key = os.environ.get("OPENAI_API_KEY", "")
-        else:
-            self.api_key = api_key
-
+        self.api_key = os.environ.get("OPENAI_API_KEY", "") if api_key == "your_openai_api_key_here" else api_key
         print(f"Using api_key {self.api_key[:3]}... Update below if incorrect.")
 
         self.client = OpenAI(api_key=self.api_key)
@@ -71,7 +35,6 @@ class NotebookHelper:
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
     
     def save_api_key(self, api_key):
-        import os
         os.environ["OPENAI_API_KEY"] = api_key
         self.api_key = api_key
         self.client = OpenAI(api_key=self.api_key)
@@ -125,7 +88,6 @@ class NotebookHelper:
                 self.examples_per_request = value
 
     def print_settings(self):
-        print("Entered information:")
         print(f"API Key: {self.api_key[:3]}...")
         print(f"OpenAI Model: {self.model}")
         print(f"Temperature: {self.temperature}")
