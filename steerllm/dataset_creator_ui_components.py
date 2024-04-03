@@ -156,10 +156,9 @@ class UIHelper:
         return button
 
     def create_use_button(self):
-        """Create a button widget for using the template."""
-        button = widgets.Button(description='Use Template')
-        button.on_click(self.nh.use_template)
-        return button
+        use_button = widgets.Button(description='Use Template')
+        use_button.on_click(self.on_use_template)
+        return use_button
     
     def save_template(self, _):
         """Save the template content to a file."""
@@ -179,6 +178,11 @@ class UIHelper:
         """Update the template dropdown options."""
         templates = self.nh.load_templates()
         self.template_dropdown.options = templates
+
+    def on_use_template(self, button):
+        template_name = self.template_dropdown.value + '.j2'
+        variables = self.nh.use_template(template_name)
+        self.create_template_form(variables, template_name)
         
     def create_template_manager(self):
         display(HTML('''
@@ -270,4 +274,7 @@ class UIHelper:
         load_form.layout.min_width = '400px'
         load_form.add_class('my-form')
         display(load_form)
-        render_button.on_click(self.nh.on_render_and_save)
+        render_button.on_click(lambda _: 
+                               self.nh.on_render_and_save(
+                                   _, self.placeholders, self.output_filename_input.value, 
+                                   template_name))

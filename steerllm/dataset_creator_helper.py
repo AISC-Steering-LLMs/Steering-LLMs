@@ -158,7 +158,7 @@ class NotebookHelper:
             return False
         with open(file_path, 'w') as f:
             f.write(content)
-            print(f"Text saved as {file_path}")
+            # print(f"Text saved as {file_path}")
         return True
 
     def save_rendered_content(self, file_path, rendered_text, overwrite=False):
@@ -194,25 +194,31 @@ class NotebookHelper:
         variables = meta.find_undeclared_variables(parsed_content)
         return variables
 
-    def on_render_and_save(self, button):
+    def on_render_and_save(self, button, placeholders, output_filename_input, template_name):
         """Render the template with the provided user input and globally save the rendered text."""
-        rendered_text = self.render_and_save(button)
+
+        placeholder_values = {var: placeholder.value for var, placeholder in placeholders.items()}        
+        output_filename = os.path.splitext(output_filename_input)[0] + '.txt'
+
+        rendered_text = self.render_and_save(template_name, placeholder_values, output_filename)
+
         if rendered_text is not None:
             # Assign the rendered_text to a variable in the global scope using globals()
+            print(f"Rendered Prompt: {rendered_text}")
             globals()['rendered_prompt'] = rendered_text
 
-    def render_and_save(self, placeholder_values, output_filename):
+    def render_and_save(self, template_name, placeholder_values, output_filename):
         """Render the template with the provided user input and save the rendered text to a file."""
 
-        rendered_text = self.render_template(self.ui.template_name, placeholder_values)
-        # Remove any existing file extension from the output filename
+        rendered_text = self.render_template(template_name, placeholder_values)
         output_path = os.path.join(self.output_dir, output_filename)
 
         if os.path.exists(output_path):
-            return f'File "{output_filename}.txt" already exists. Do you want to overwrite it?'
+            print(f'File "{output_filename}.txt" already exists.') # TODO: Add overwrite option functionality
+            return None
         else:
             self.save_rendered_content(output_path, rendered_text)
-            return None
+        return rendered_text
     
 
     
