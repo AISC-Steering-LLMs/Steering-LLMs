@@ -12,7 +12,7 @@ experiment_notes: "Trying Eleni honesty contrastive with because."
 prompts_sheet: "../data/inputs/honesty_contrastive_formatted_final.csv"
 use_gpu: False
 write_cache: False
-evaluate_completion: True
+evaluate_completion: False
 steering:
   load: False
   write: False
