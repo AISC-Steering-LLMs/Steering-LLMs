@@ -1,3 +1,4 @@
+
 import os
 import json
 import math
@@ -33,6 +34,8 @@ class NotebookHelper:
         self.template_dir = template_dir
         self.output_dir = output_dir
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
+
+        self.rendered_text = None
     
     def save_api_key(self, api_key):
         os.environ["OPENAI_API_KEY"] = api_key
@@ -168,6 +171,17 @@ class NotebookHelper:
             # Assign the rendered_text to a variable in the global scope using globals()
             print(f"Rendered Prompt: {rendered_text}")
             globals()['rendered_prompt'] = rendered_text
+
+
+    def on_render_and_save(self, button, placeholders, output_filename_input, template_name):
+        """Render the template with the provided user input and globally save the rendered text."""
+        placeholder_values = {var: placeholder.value for var, placeholder in placeholders.items()}        
+        output_filename = os.path.splitext(output_filename_input)[0] + '.txt'
+        rendered_text = self.render_and_save(template_name, placeholder_values, output_filename)
+        
+        if rendered_text is not None:
+            self.rendered_text = rendered_text  # Update the instance attribute
+            print(f"Rendered Prompt: {rendered_text}")
 
     def render_and_save(self, template_name, placeholder_values, output_filename):
         """Render the template with the provided user input and save the rendered text to a file."""
