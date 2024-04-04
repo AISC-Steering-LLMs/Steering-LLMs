@@ -10,12 +10,12 @@
 model_name: "gpt2-small"
 experiment_notes: "Trying Eleni honesty contrastive with because."
 prompts_sheet: "../data/inputs/honesty_contrastive_formatted_final.csv"
-use_gpu: True
+use_gpu: False
 write_cache: False
-evaluate_completion: true
+evaluate_completion: True
 steering:
-  load: true
-  write: true
+  load: False
+  write: False
   file: "../data/inputs/steering/gpt2-small_Good_PCA_rep_reader.pkl"
 
 dim_red:
