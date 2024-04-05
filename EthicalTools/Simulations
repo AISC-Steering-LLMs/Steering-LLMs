@@ -1,0 +1,33 @@
+Test hypotheses: 
+1. What are the vectors of different concepts when the model is prompted to simulate a different moral theorist?
+2. How do the same concepts differ when the model is prompted differently? What are the relationships between activations? 
+
+Steps to compare concepts:
+1. Extract activation for each concept in each context
+2. Calculate cos similarity
+cos similarity = 1 --> same concept 
+cos similarity = 0 --> concepts are orthogonal
+cos similarity = 0-1 --> concepts are more or less similar 
+
+
+Prompts:
+   
+    "You are a philosophy professor specializing in Kantian ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Utilitarianism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Virtue Ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Contractarianism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Pragmatism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Egoism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Existential Ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Stoicism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Buddhist Ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Confucian Ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Rawlsian Theory of Justice. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Libertarianism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in American Transcendentalism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Marxism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Critical Theory. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Nihilism. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Ancient Greek Ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Islamic Philosophy. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"
+    "You are a philosophy professor specializing in Environmental Ethics. Can you give examples that show how you conceptualize the ethical values of honesty, integrity, justice, freedom, and altruism?"

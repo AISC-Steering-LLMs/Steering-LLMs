@@ -1,0 +1,12 @@
+# Note for gpt-4-0125-preview, the maximum number of tokens is 4096
+# including the prompt and the response
+# Based on Eleni's latest prompts
+# Assuming an input prompt of 200 words = 250 tokens
+# And assuming 50 tokens per generated prompt example we want in the response
+# We can expect to generate a maximum of (4096-250)/50 = 3846/50 = 76.92
+# So something like 75 generated examples per prompt is the max we can ask for in one go.
+# 250 prompt tokens = 200 * 0.01/1000 = $0.0025
+# 3846 completion tokens = 3846 * 0.03/1000 = $0.11538
+# So the total cost is $0.11788 per 75 prompts.
+# If we wanted to generate 1000 prompts, it would cost $1.5718
+# Please check your prompts work with ChatGPT before generating a large dataset using the API

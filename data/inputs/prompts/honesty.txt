@@ -1,0 +1,1 @@
+Please generate a sentence that embodies the concept of honesty, or the opposite of honesty, choosing either with 50% probability. Only write this sentence and nothing else.

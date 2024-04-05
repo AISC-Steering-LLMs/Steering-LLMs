@@ -1,0 +1,1 @@
+Please generate a sentence that embodies the concept of stupidity, or the opposite of stupidity in the context of social setting, choosing either with 50% probability. Only write this sentence and nothing else.
