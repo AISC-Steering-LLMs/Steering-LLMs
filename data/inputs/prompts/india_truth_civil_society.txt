@@ -1,0 +1,1 @@
+Please generate a sentence that embodies the concept of truth, or the opposite of truth in the context of civil society in the country of India, choosing either with 50% probability. Only write this sentence and nothing else.

@@ -1,0 +1,1 @@
+Please generate a sentence that embodies the concept of fear, or the opposite of fear, choosing either with 50% probability. Only write this sentence and nothing else.
