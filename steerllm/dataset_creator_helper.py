@@ -22,6 +22,8 @@ class NotebookHelper:
         self.api_key = os.environ.get("OPENAI_API_KEY", "") if api_key == "your_openai_api_key_here" else api_key
         print(f"Using api_key {self.api_key[:3]}... Update below if incorrect.")
 
+        self.dataset_generator = DatasetGenerator()
+
         self.client = OpenAI(api_key=self.api_key)
         self.model_options = ['gpt-4-0125-preview', 'gpt-4', 'gpt-3.5-turbo']
         self.model = 'gpt-4'
