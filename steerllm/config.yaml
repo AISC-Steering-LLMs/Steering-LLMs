@@ -12,7 +12,11 @@ experiment_notes: "Trying Eleni honesty contrastive with because."
 prompts_sheet: "../data/inputs/honesty_contrastive_formatted_final.csv"
 use_gpu: True
 write_cache: False
-enable_steering: True
+evaluate_completion: true
+steering:
+  load: true
+  write: true
+  file: "../data/inputs/steering/gpt2-small_Good_PCA_rep_reader.pkl"
 
 dim_red:
   methods:

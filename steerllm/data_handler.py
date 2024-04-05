@@ -11,10 +11,14 @@ import numpy as np
 @dataclass
 class Activation:
     prompt: str
-    ethical_area: str
-    positive: bool
+    labels: list[str]
     raw_activations: Any = None
     hidden_states: List[np.ndarray] = None
+    # prompt: str
+    # ethical_area: str
+    # positive: bool
+    # raw_activations: Any = None
+    # hidden_states: List[np.ndarray] = None
 
 class DataHandler:
     """
@@ -71,7 +75,8 @@ class DataHandler:
         """
         full_path = os.path.join(self.data_path, filename)
         if filename.endswith(".csv"):
-            df = pd.read_csv(full_path)
+            # index_col false is required to get the same behavior as read_excel
+            df = pd.read_csv(full_path, delimiter=",", index_col=False)
         elif filename.endswith(".xlsx"):
             df = pd.read_excel(full_path)
         else:

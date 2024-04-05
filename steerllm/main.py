@@ -4,6 +4,7 @@ import matplotlib
 import os
 from omegaconf import DictConfig, OmegaConf
 import hydra
+import pickle
 
 from data_handler import DataHandler
 from data_analyser import DataAnalyzer
@@ -72,17 +73,55 @@ def main(cfg: DictConfig) -> None:
     logging.info("Getting activations")
 
 
-
-
     # Can use pudb as interactive commandline debugger
     # import pudb; pu.db
     
     
     data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
+    steering_handler = SteeringHandler(cfg, model_handler, data_handler)
+    rep_reader = None
+    
+    if cfg.steering.load:
+        assert cfg.steering.file != ""
+        full_path = os.path.join(DATA_PATH, cfg.steering.file)
+        with open(full_path, 'rb') as f:
+            # Load the object from the file
+            rep_reader = pickle.load(f)
 
+        # TODO: Add way to compute_activations to steering_handler
+        # steering_handler.compute_activations(activations_cache)
+        logging.info("Right now, we can only compute activations with non-steered model")
 
+    # else:
     model_handler.compute_activations(activations_cache)
 
+
+    if cfg.steering.write:
+        # Steering
+        logging.info("Running steering")
+        hidden_layers = model_handler.get_hidden_layers()
+        concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
+        # Add function to data_handler
+            
+        data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
+        for concept, rep_reader in concept_rep_readers.items():
+            # TODO Replace PCA with variable for method of generating steering vector
+            # TODO: Right now this pickle is a giant file. Fix
+            filename = os.path.join(experiment_base_dir, f"{cfg.model_name}_{concept}_PCA_rep_reader.pkl")
+            with open(filename, 'wb') as f:
+                pickle.dump(rep_reader, f)
+
+    if cfg.evaluate_completion:
+        assert cfg.steering.file != ""
+        assert rep_reader is not None
+        logging.info("Runing Control Pipeline")
+        # TODO: Make input correspond to what we want to generate for
+        base_continuation, control_continuation = steering_handler.control(rep_reader, input=activations_cache[0].prompt, layer_id=None)
+        logging.info("Base Continuation")
+        logging.info(base_continuation)
+        logging.info("")
+        logging.info("Control Continuation")
+        logging.info(control_continuation)
 
 
     tsne_model = TSNE(n_components=2, random_state=42)
@@ -92,7 +131,7 @@ def main(cfg: DictConfig) -> None:
     fa_model = FeatureAgglomeration(n_clusters=2)
     fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
 
-    # ToDo: 
+    # TODO: 
     # Would be good if our code could just take any valid
     # dimensionality reduction method from sci-kit learn.
     dimensionality_reduction_map = {
@@ -175,13 +214,6 @@ def main(cfg: DictConfig) -> None:
             print(f"Warning: Method {method_name} not found in DataAnalyzer.")
 
 
-    if cfg.enable_steering:
-        # Steering
-        logging.info("Running steering")
-        steering_handler = SteeringHandler(cfg, model_handler, data_handler)
-        hidden_layers = model_handler.get_hidden_layers()
-        concept_H_tests, concept_rep_readers = steering_handler.compute_directions(prompts_dict, rep_token=-1)
-        data_analyzer.repreading_accuracy_plot(hidden_layers, concept_H_tests, concept_rep_readers)
     
     # Activations cache takes up a lot of space, only write if user sets
     # parameter
