@@ -1,0 +1,1 @@
+Please generate a sentence that embodies the concept of rage, or the opposite of rage in the context of professional, choosing either with 50% probability. Only write this sentence and nothing else.
