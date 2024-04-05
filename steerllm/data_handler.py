@@ -10,15 +10,15 @@ import numpy as np
 
 @dataclass
 class Activation:
-    prompt: str
-    labels: list[str]
-    raw_activations: Any = None
-    hidden_states: List[np.ndarray] = None
     # prompt: str
-    # ethical_area: str
-    # positive: bool
+    # labels: list[str]
     # raw_activations: Any = None
     # hidden_states: List[np.ndarray] = None
+    prompt: str
+    ethical_area: str
+    positive: bool
+    raw_activations: Any = None
+    hidden_states: List[np.ndarray] = None
 
 class DataHandler:
     """
@@ -31,9 +31,9 @@ class DataHandler:
     """
 
     # Contants for the columns in the prompts CSV
-    PROMPT_COLUMN = "Prompt"
-    ETHICAL_AREA_COLUMN = "Ethical_Area"
-    POS_COLUMN = "Positive"
+    PROMPT_COLUMN = "prompt"
+    ETHICAL_AREA_COLUMN = "ethical_area"
+    POS_COLUMN = "ethical_valence"
 
 
 
