@@ -1,6 +1,4 @@
 # Imports
-
-import matplotlib
 import os
 from omegaconf import DictConfig, OmegaConf
 import hydra
@@ -17,70 +15,59 @@ from sklearn.cluster import FeatureAgglomeration
 
 import logging
 
+# May need to install tkinter if not included
+import matplotlib
+matplotlib.use('TkAgg')
 
 
 
-# Constants
-# If going forward with Hydra, we put everything here
-# That really is constant betweeen runs.
-# Everything that is configurable goes in config.yaml
-# The model name is now there.
+# Constants - things we don't want/need to configure in config.yaml
 SRC_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(SRC_PATH, "..", "data")
 OUTPUT_PICKLE = os.path.join(DATA_PATH, "outputs", "activations_cache.pkl")
 SEED = 42
 
-# May need to install tkinter if not included
-matplotlib.use('TkAgg')
-
-    
+ 
 
 @hydra.main(version_base=None, config_path=".", config_name="config_updated.yaml")
 def main(cfg: DictConfig) -> None:  
     
-    # Create a model handler
-    # Instaitiate the model handler will load the model
     logging.info("Creating model handler to load the model")
+
+    # Instantiting the model handler will load the model
     model_handler = ModelHandler(cfg)
 
 
 
-    # Process data
     logging.info("Processing data")
 
     # Create a data handler
     data_handler = DataHandler(DATA_PATH)
 
-
     # Load the inputs (prompts)
     prompts_dict = data_handler.csv_to_dictionary(cfg.prompts_sheet)
-
 
     # Create output directories
     experiment_base_dir, images_dir, metrics_dir = data_handler.create_output_directories()
 
-
     # Copy the config.yaml file to the output directory and the prompts
-    # Why? So we can see what the configuration was for a given run.
+    # Why? So we can see what the configuration was for a given run for experiment logging.
     # config.yaml will change from run to run, so we want to save it for each run.
     data_handler.write_experiment_parameters(cfg, prompts_dict, experiment_base_dir)
 
+    # Convert data into Activation objects
     activations_cache = data_handler.populate_data(prompts_dict)
 
 
 
-    # Get activations
     logging.info("Getting activations")
-
-
-    # Can use pudb as interactive commandline debugger
-    # import pudb; pu.db
     
-    
-    data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
+    # Creates objects for steering and data analysis
     steering_handler = SteeringHandler(cfg, model_handler, data_handler)
+    data_analyzer = DataAnalyzer(images_dir, metrics_dir, SEED)
     rep_reader = None
     
+    # Steering
     if cfg.steering.load:
         assert cfg.steering.file != ""
         full_path = os.path.join(DATA_PATH, cfg.steering.file)
@@ -94,7 +81,6 @@ def main(cfg: DictConfig) -> None:
 
     # else:
     model_handler.compute_activations(activations_cache)
-
 
     if cfg.steering.write:
         # Steering
@@ -124,58 +110,20 @@ def main(cfg: DictConfig) -> None:
         logging.info(control_continuation)
 
 
-    tsne_model = TSNE(n_components=2, random_state=42)
-    tsne_embedded_data_dict, tsne_labels, tsne_prompts = data_analyzer.plot_embeddings(activations_cache, tsne_model)
-    pca_model = PCA(n_components=2, random_state=42)
-    pca_embedded_data_dict, pca_labels, pca_prompts = data_analyzer.plot_embeddings(activations_cache, pca_model)
-    fa_model = FeatureAgglomeration(n_clusters=2)
-    fa_embedded_data_dict, fa_labels, fa_prompts = data_analyzer.plot_embeddings(activations_cache, fa_model)
+
+
+    logging.info("Running dimensionality reduction related analysis and classification on the reduced data")
 
     # TODO: 
     # Would be good if our code could just take any valid
-    # dimensionality reduction method from sci-kit learn.
+    # dimensionality reduction method from scikit-learn.
+    # Also to just be able to read this from the config file.
     dimensionality_reduction_map = {
         'pca': PCA,
         'tsne': TSNE,
         'feature_agglomeration': FeatureAgglomeration,
         # Add more mappings as needed
     }
-
-
-
-    # # Mapping of method names to their corresponding classes
-    # # This assumes we have these classes imported correctly
-    # # at the top of our file
-    # dimensionality_reduction_map = {
-    #     'pca': PCA,
-    #     'tsne': TSNE,
-    #     'feature_agglomeration': FeatureAgglomeration
-    # }
-
-    # results = {}
-    # dim_red_methods = cfg.dim_red.methods
-
-    # # Iterate through each dim red method and its configuration
-    # for method_name, method_config in dim_red_methods.items():
-    #     DimRedClass = dimensionality_reduction_map.get(method_name.lower())
-        
-    #     if not DimRedClass:
-    #         print(f"{method_name} not found.")
-    #         continue
-        
-    #     # Instantiate the model with parameters unpacked from method_config
-    #     model = DimRedClass(**method_config)
-        
-    #     # Call the data_analyzer.plot_embeddings method with the model
-    #     embedded_data_dict, labels, prompts = data_analyzer.plot_embeddings(activations_cache, model)
-        
-    #     # Store results
-    #     results[method_name] = {
-    #         'embedded_data_dict': embedded_data_dict,
-    #         'labels': labels,
-    #         'prompts': prompts
-    #     }
-    
 
 
     classifier_methods = OmegaConf.to_container(cfg.classifiers.methods, resolve=True)
@@ -195,7 +143,6 @@ def main(cfg: DictConfig) -> None:
         else:
             logging.warning(f"Warning: {method_name} is not a valid dimension reduction method or is not configured.")
 
-    # Other dimensionality reduction related analysis
     logging.info("Running other dimensionality reduction related analysis")
 
     for method_name in cfg.other_dim_red_analyses.methods:
@@ -204,7 +151,6 @@ def main(cfg: DictConfig) -> None:
         else:
             print(f"Warning: Method {method_name} not found in DataAnalyzer.")
 
-    # Further analysis not based on dimensionality reduction
     logging.info("Running further analysis not based on dimensionality reduction")
 
     for method_name in cfg.non_dimensionality_reduction.methods:
@@ -218,6 +164,7 @@ def main(cfg: DictConfig) -> None:
     # Activations cache takes up a lot of space, only write if user sets
     # parameter
     if cfg.write_cache:
+        logging.info("Writing cache")
         model_handler.write_activations_cache(activations_cache, experiment_base_dir)
 
 
