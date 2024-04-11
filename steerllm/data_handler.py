@@ -11,9 +11,11 @@ import numpy as np
 @dataclass
 class Activation:
     prompt: str
-    labels: list[str]
+    ethical_area: str
+    positive: bool
     raw_activations: Any = None
     hidden_states: List[np.ndarray] = None
+    # labels: list[str]
     # prompt: str
     # ethical_area: str
     # positive: bool
