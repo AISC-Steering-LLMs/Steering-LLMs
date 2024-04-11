@@ -11,7 +11,9 @@ import numpy as np
 @dataclass
 class Activation:
     prompt: str
-    labels: list[str]
+    ethical_area: str
+    positive: bool
+    # labels: list[str]
     raw_activations: Any = None
     hidden_states: List[np.ndarray] = None
     # prompt: str
@@ -187,6 +189,7 @@ class DataHandler:
                                                 prompts_dict[DataHandler.ETHICAL_AREA_COLUMN],
                                                 prompts_dict[DataHandler.POS_COLUMN]):
             act = Activation(prompt, ethical_area, bool(positive), None, [])
+
             activations_cache.append(act)
         return activations_cache
 
