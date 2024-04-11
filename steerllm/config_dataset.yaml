@@ -1,0 +1,16 @@
+llm_b_model_name: "gpt2-small"
+temperature: 1
+total_examples: 200
+examples_per_request: 10
+prototype_examples: 10
+
+datasets:
+  honesty_contrastive-ab_explicit_end-biased:
+    prompt_template: "concept_contrastive-ab_explicit_end-biased.txt"
+    prompt_template_variables:
+      concept: "honesty"
+      concept_adjective: "honest"
+      neg_concept_adjective: "dishonest"
+      concept_question: "Should you uphold honesty when dealing with mistakes?"
+      positive_answer: "Always accept responsibility for your own mistakes."
+      negative_answer: "Find someone else to blame."

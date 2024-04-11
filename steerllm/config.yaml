@@ -23,12 +23,11 @@ dim_red:
     pca:
       n_components: 2
       random_state: 42
-    tsne:
-      n_components: 2
-      perplexity: 30
-    feature_agglomeration:
-      n_clusters: 2
-
+    # tsne:
+    #   n_components: 2
+    #   perplexity: 30
+    # feature_agglomeration:
+    #   n_clusters: 2
 
 classifiers:
   methods:

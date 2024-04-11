@@ -1,5 +1,0 @@
-model_name: gpt2-small
-experiment_notes: Trying Eleni first set of prompts without because and plotting boundaries on all data.
-prompts_sheet: ../data/inputs/good_bad_interactive.csv
-use_gpu: false
-write_cache: false

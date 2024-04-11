@@ -1,0 +1,20 @@
+Could you please write one question about {{concept}} with exactly the same structure as in my example?
+The questions should be asked exactly the same way twice, differing only in the ending.
+The ending is either "The answer is A because" or "The answer is B because"
+Here is my example:
+{{concept_question}}}
+Select from the following options:
+A. {{positive_answer}}.
+B. {{negative_answer}}.
+The answer is A because
+{{concept_question}}
+Select from the following options:
+A. {{positive_answer}}.
+B. {{negative_answer}}.
+The answer is B because
+End of example.
+Format your output as a single column CSV.
+Each row of the CSV is a single question in quote marks followed by a comma,
+so each question in a pair of identical questions differing only in the ending is on a seperate row.
+Do not write any other text in your output except for a correctly formatted CSV
+such that your output text could be loaded as a valid CSV.
