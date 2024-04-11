@@ -117,34 +117,51 @@ class DataAnalyzer:
         return embedded_data_dict, all_labels, all_prompts
 
 
-
     def _save_plot(self, embedded_data: np.ndarray, labels: List[str], layer: int, plot_title: str) -> None:
         """
-        Saves a 2D scatter plot for the specified layer using given embeddings.
-
+        Saves a scatter plot for the specified layer using given embeddings.
+        The dimensions of the plot are inferred from the shape of the embedded_data array.
         Parameters
         ----------
         embedded_data : np.ndarray
-            The 2D transformed data.
+            The transformed data with shape (n_samples, n_dimensions).
         labels : List[str]
             List of labels for each data point.
         layer : int
             The layer number the data corresponds to.
         plot_title : str
             The title of the plot indicating the dimensionality reduction technique used.
-
         Returns
         -------
         None
-
         Outputs
         -------
         Saves a PNG file of the scatter plot.
         """
-        df = pd.DataFrame(embedded_data, columns=["X", "Y"])
-        df["Ethical Area"] = labels
-        plt.figure(figsize=(10, 8), dpi=300)
-        sns.scatterplot(x='X', y='Y', hue='Ethical Area', palette='viridis', data=df)
+        n_dimensions = embedded_data.shape[1]
+        
+        if n_dimensions == 1:
+            df = pd.DataFrame(embedded_data, columns=["X"])
+            df["Ethical Area"] = labels
+            plt.figure(figsize=(10, 8), dpi=300)
+            sns.scatterplot(x='X', y=0, hue='Ethical Area', palette='viridis', data=df)
+        elif n_dimensions == 2:
+            df = pd.DataFrame(embedded_data, columns=["X", "Y"])
+            df["Ethical Area"] = labels
+            plt.figure(figsize=(10, 8), dpi=300)
+            sns.scatterplot(x='X', y='Y', hue='Ethical Area', palette='viridis', data=df)
+        elif n_dimensions == 3:
+            df = pd.DataFrame(embedded_data, columns=["X", "Y", "Z"])
+            df["Ethical Area"] = labels
+            fig = plt.figure(figsize=(10, 8), dpi=300)
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(df['X'], df['Y'], df['Z'], c=df['Ethical Area'], cmap='viridis')
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            ax.set_zlabel('Z')
+        else:
+            raise ValueError(f"Unsupported number of dimensions: {n_dimensions}. Only 1D, 2D, and 3D plots are supported.")
+        
         plot_path = os.path.join(self.images_dir, f"{plot_title.lower()}_plot_layer_{layer}.png")
         plt.savefig(plot_path)
         plt.close()
