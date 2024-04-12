@@ -8,6 +8,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModel
 import transformer_lens.utils as utils
 import transformer_lens
+from nnsight import LanguageModel
 from tqdm import tqdm
 from omegaconf import DictConfig
 from typing import Any
@@ -36,30 +37,6 @@ class ModelHandler:
         self.model = self.load_model()
 
 
-    def save_residual_hook(self, act, output, hook) -> None:
-        """
-        This hook function saves the output (residual stream) of each layer to disk.
-        It generates a unique filename for each layer based on its order.
-        
-        Parameters
-        ----------
-        act : Activation
-            The Activation object associated with the current input being processed.
-        output : torch.Tensor
-            The output tensor from the layer to which this hook is attached.
-        hook : Any
-            The hook reference, not used in this function but required by the hook signature.
-
-        Returns
-        -------
-        None
-        """
-        if act.hidden_states == None:
-            act.hidden_states = []
-        act.hidden_states.append(output.cpu().numpy()[0][-1])
-
-
-
     def load_model(self) -> Any:
         """
         Loads the transformer model based on the configuration provided at initialization.
@@ -81,25 +58,29 @@ class ModelHandler:
         # if not self.config.use_gpu:
         #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-        if self.config.model_name.startswith("gpt"):
-            model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name, device=device)
-        elif self.config.model_name.startswith("meta-llama") and self.config.use_gpu == True:
-            hf_model = AutoModelForCausalLM.from_pretrained(self.config.model_name, load_in_4bit=True, torch_dtype=torch.float32)
-            tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
-            model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name,
-                                                         hf_model=hf_model,
-                                                         torch_dtype=torch.float32,
-                                                         fold_ln=False,
-                                                         fold_value_biases=False,
-                                                         center_writing_weights=False,
-                                                         center_unembed=False,
-                                                         tokenizer=tokenizer)
-        else:
-            hf_model = AutoModelForCausalLM.from_pretrained(self.config.model_name)
-            tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
-            model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name,
-                                                         hf_model=hf_model,
-                                                         tokenizer=tokenizer, device=device)
+        # if self.config.model_name.startswith("gpt"):
+        #     model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name, device=device)
+        # elif self.config.model_name.startswith("meta-llama") and self.config.use_gpu == True:
+        #     hf_model = AutoModelForCausalLM.from_pretrained(self.config.model_name, load_in_4bit=True, torch_dtype=torch.float32)
+        #     tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
+        #     model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name,
+        #                                                  hf_model=hf_model,
+        #                                                  torch_dtype=torch.float32,
+        #                                                  fold_ln=False,
+        #                                                  fold_value_biases=False,
+        #                                                  center_writing_weights=False,
+        #                                                  center_unembed=False,
+        #                                                  tokenizer=tokenizer)
+        # else:
+        #     hf_model = AutoModelForCausalLM.from_pretrained(self.config.model_name)
+        #     tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
+        #     model = transformer_lens.HookedTransformer.from_pretrained(self.config.model_name,
+        #                                                  hf_model=hf_model,
+        #                                                  tokenizer=tokenizer, device=device)
+
+
+        model = LanguageModel(self.config.model_name, device_map=device)
+
         gc.collect()
         gc.collect() # Running twice because of weird timing reasons.
         return model
@@ -119,18 +100,18 @@ class ModelHandler:
         None
         """
         self.reset_activations(activations_cache)
-        for act in tqdm(activations_cache, desc="Computing activations", disable=True):
-            pattern_hook_names_filter = lambda name: name.startswith("blocks") and name.endswith("hook_resid_post")
-            save_act = partial(self.save_residual_hook, act)
-            tokens = self.model.to_tokens(act.prompt)
-            self.model.run_with_hooks(
-                tokens,
-                return_type=None,
-                fwd_hooks=[(
-                    pattern_hook_names_filter,
-                    save_act
-                )]
-            )
+
+        for act in tqdm(activations_cache, desc="Computing activations", disable=False):
+            if act.hidden_states == None:
+                act.hidden_states = []
+            with self.model.trace(act.prompt):
+                output = [layer.mlp.output[0][:].save() for layer in self.model.transformer.h]
+            
+            output = [el.value.cpu().numpy() for el in output]
+            
+            act.hidden_states = output
+
+
 
 
     def compute_continuation(self, max_new_tokens=256, input=""):
@@ -155,17 +136,19 @@ class ModelHandler:
         """
 
         print("input", input)
-
         output = ""
+        with self.model.generate(input, max_new_tokens=max_new_tokens) as tracer:
+            for _ in tqdm(range(max_new_tokens), desc="Computing Continuation"):
 
-        for _ in tqdm(range(max_new_tokens), desc="Computing Continuation"):
+                hidden_states = self.model.transformer.h[-1].output[0]
 
-            logits = self.model(input+output, return_type="logits")
-            next_token = self.model.tokenizer.batch_decode(logits.argmax(dim=-1)[0])
-            output += next_token[-1]
+                hidden_states = self.model.lm_head(self.model.transformer.ln_f(hidden_states)).save()
 
-            if next_token[-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
-                break
+                tokens = torch.softmax(hidden_states, dim=2).argmax(dim=2).save()
+                if tokens[0] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
+                    break
+                output += self.model.tokenizer.decode(tokens[0])
+
 
         return output
 
@@ -212,8 +195,7 @@ class ModelHandler:
 
 
     def get_hidden_layers(self) -> list[int]:
-        return list(range(-1, -self.model.cfg.n_layers, -1))
-        # return list(range(0, self.model.cfg.n_layers, -1))
+        return list(range(-1, -self.model.config.n_layer, -1))
 
     @staticmethod
     def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:
