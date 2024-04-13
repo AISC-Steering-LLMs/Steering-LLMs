@@ -35,6 +35,19 @@ class ModelHandler:
         """
         self.config = config
         self.model = self.load_model()
+        self.model_keys = {
+            "openai-community/gpt2": {
+                'model': 'transformer',
+                'layers': 'h',
+            },
+            "meta-llama/Llama-2-7b-hf": {
+                'model': 'model',
+                'layers': 'layers',
+            }
+        }
+
+    def get_property_name(self, key: str):
+        return self.model_keys[self.model.config._name_or_path][key]
 
 
     def load_model(self) -> Any:
@@ -79,7 +92,7 @@ class ModelHandler:
         #                                                  tokenizer=tokenizer, device=device)
 
 
-        model = LanguageModel(self.config.model_name, device_map=device)
+        model = LanguageModel(self.config.model_name, device_map=device, torch_dtype=torch.float16)
 
         gc.collect()
         gc.collect() # Running twice because of weird timing reasons.
@@ -101,13 +114,31 @@ class ModelHandler:
         """
         self.reset_activations(activations_cache)
 
+
+        model_key = self.get_property_name('model')
+        layer_key = self.get_property_name('layers')
+        # with self.model.trace() as tracer:
+        #     outputs = []
+        #     for act in tqdm(activations_cache, desc="Computing activations", disable=False):
+        #         if act.hidden_states == None:
+        #             act.hidden_states = []
+        #         with tracer.invoke(act.prompt):
+        #             output = [layer.mlp.output[0][:].save() for layer in getattr(getattr(self.model, model_key), layer_key)]
+                
+        #         outputs.append(output)
+                
+
+        # for idx, act in enumerate(activations_cache):
+        #     act.hidden_states = [el.value.cpu().numpy()[:][-1] for el in outputs[idx]]
+
+
         for act in tqdm(activations_cache, desc="Computing activations", disable=False):
             if act.hidden_states == None:
                 act.hidden_states = []
             with self.model.trace(act.prompt):
-                output = [layer.mlp.output[0][:].save() for layer in self.model.transformer.h]
+                output = [layer.mlp.output[0][:].save() for layer in getattr(getattr(self.model, model_key), layer_key)]
             
-            output = [el.value.cpu().numpy() for el in output]
+            output = [el.value.cpu().numpy()[:][-1] for el in output]
             
             act.hidden_states = output
 
@@ -135,43 +166,45 @@ class ModelHandler:
             The generated text continuation.
         """
 
-        print("input", input)
-        output = ""
-        with self.model.generate(input, max_new_tokens=max_new_tokens) as tracer:
-            for _ in tqdm(range(max_new_tokens), desc="Computing Continuation"):
+        with self.model.generate(input, max_new_tokens=max_new_tokens):
+            self.model.lm_head.output.argmax(dim=-1)
+            token_ids = []
+            for _ in tqdm(range(max_new_tokens - 1), desc="Computing Continuation"):
 
-                hidden_states = self.model.transformer.h[-1].output[0]
-
-                hidden_states = self.model.lm_head(self.model.transformer.ln_f(hidden_states)).save()
-
-                tokens = torch.softmax(hidden_states, dim=2).argmax(dim=2).save()
-                if tokens[0] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
+                token_ids.append(self.model.lm_head.next().output.argmax(dim=-1).save())
+                if token_ids[0][-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
                     break
-                output += self.model.tokenizer.decode(tokens[0])
 
+            # output = self.model.generator.output.save()
+
+        # print(output.shape)
+        # print("token_ids: ", token_ids)
+        output = self.model.tokenizer.batch_decode(torch.cat(token_ids[1:]))
 
         return output
 
-    def compute_altered_continuation(self, max_new_tokens=256, input="", activations=None, pattern_hook_names_filter=None, act_patching_hook=None):
-        print("input", input)
+    def compute_altered_continuation(self, max_new_tokens=256, input="", activations=None):
+        model_key = self.get_property_name('model')
+        layer_key = self.get_property_name('layers')
 
         output = ""
-        for _ in tqdm(range(max_new_tokens), desc="Computing Continuation"):
+        with self.model.generate(input, max_new_tokens=max_new_tokens):
+            for idx, layer in enumerate(getattr(getattr(self.model, model_key), layer_key)):
+                layer.mlp.output[0][-1] += activations[idx]
+            
+            token_ids = self.model.lm_head.output.argmax(dim=-1)
+            for _ in tqdm(range(max_new_tokens - 1), desc="Computing Altered Continuation"):
 
-            logits = self.model.run_with_hooks(
-                            input+output,
-                            return_type="logits",
-                            fwd_hooks=[(
-                                pattern_hook_names_filter,
-                                act_patching_hook
-                            )]
-                        )
+                for idx, layer in enumerate(getattr(getattr(self.model, model_key), layer_key)):
+                    layer.mlp.output[0][-1] += activations[idx]
 
-            next_token = self.model.tokenizer.batch_decode(logits.argmax(dim=-1)[0])
-            output += next_token[-1]
+                token_ids = self.model.lm_head.next().output.argmax(dim=-1)
+                # if token_ids[0][-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
+                #     break
 
-            if next_token[-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
-                break
+            output = self.model.generator.output.save()
+
+        output = self.model.tokenizer.batch_decode(output)
 
         return output
 
@@ -195,7 +228,9 @@ class ModelHandler:
 
 
     def get_hidden_layers(self) -> list[int]:
-        return list(range(-1, -self.model.config.n_layer, -1))
+        model_key = self.get_property_name('model')
+        layer_key = self.get_property_name('layers')
+        return list(range(-1, -len(getattr(getattr(self.model, model_key), layer_key)), -1))
 
     @staticmethod
     def write_activations_cache(activations_cache: Any, experiment_base_dir: str) -> None:
