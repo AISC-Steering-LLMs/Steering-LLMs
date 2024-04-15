@@ -6,11 +6,20 @@ prototype_examples: 10
 
 datasets:
   honesty_contrastive-ab_explicit_end-biased:
-    prompt_template: "concept_contrastive-ab_explicit_end-biased.txt"
-    prompt_template_variables:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
       concept: "honesty"
-      concept_adjective: "honest"
-      neg_concept_adjective: "dishonest"
       concept_question: "Should you uphold honesty when dealing with mistakes?"
       positive_answer: "Always accept responsibility for your own mistakes."
       negative_answer: "Find someone else to blame."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "honest"
+          neg_concept_adjective: "dishonest"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "honest"
+          neg_concept_adjective: "dishonest"
