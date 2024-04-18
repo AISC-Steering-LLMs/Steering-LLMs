@@ -13,7 +13,7 @@ from dataset_creator import DatasetCreator
 
 # Constants - things we don't want/need to configure in config.yaml
 SRC_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(SRC_PATH, "..", "data")
+DATA_PATH = os.path.join(os.path.dirname(SRC_PATH), 'data')
 
 
 
@@ -32,27 +32,32 @@ def get_user_response():
 def main(cfg: DictConfig) -> None: 
 
     api_key = os.environ["OPENAI_API_KEY"]
-    client = OpenAI(api_key)
+    client = OpenAI(api_key=api_key)
 
     # Load the LLM configuration for dataset creation
     model = cfg.llm_b_model_name
     temperature = cfg.temperature
-    total_examples = cfg.total_number_of_examples
+    total_examples = cfg.total_examples
     examples_per_request = cfg.examples_per_request
     prototype_examples = cfg.prototype_examples
 
-     # Load the dataset configuration info
-    env = Environment(loader=FileSystemLoader('.'))
+    # Load the dataset configuration info
+    template_dir = os.path.join(DATA_PATH, "inputs/templates")
+    dataset_template_dir = os.path.join(template_dir, "dataset_prompt_templates")
+    header_labelling_template_dir = os.path.join(template_dir, "header_labelling_prompt_templates")
+    env = Environment(loader=FileSystemLoader(template_dir))
     rendered_prompts = {}
     rendered_header_labelling_pairs = {}
 
     for dataset_name, dataset_config in cfg.datasets.items():
-        dataset_template = env.get_template(dataset_config.dataset_prompt_template)
+        dataset_template_path = os.path.join(dataset_template_dir, dataset_config.dataset_prompt_template)
+        dataset_template = env.get_template(dataset_template_path)
         dataset_prompt = dataset_template.render(**dataset_config.dataset_prompt_template_variables)
         rendered_prompts[dataset_name] = dataset_prompt
         dataset_header_labelling_pairs = {}
 
         for pair_name, pair_config in dataset_config.header_labelling_pairs.items():
+            pair_template_path = os.path.join(header_labelling_template_dir, pair_config.hl_prompt_template)
             pair_template = env.get_template(pair_config.hl_prompt_template)
             pair_prompt = pair_template.render(**pair_config.hl_prompt_template_variables)
             dataset_header_labelling_pairs[pair_name] = pair_prompt

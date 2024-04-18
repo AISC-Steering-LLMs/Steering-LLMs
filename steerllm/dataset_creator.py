@@ -74,12 +74,11 @@ class DatasetCreator:
             The scaffolded prompt.
         """
 
-        scaffolded_prompt = f"Repeat the following instruction {examples_per_request} times,
-                              always generating a unique answer to the instruction.
-                              Begin instruction: {prompt} End instruction.
-                              Put the result of each instruction within a pair quote marks
-                              on a new line as if each was the row of a single column csv
-                              and include no other text."
+        scaffolded_prompt = f"""Repeat the following instruction {examples_per_request} times, 
+                                always generating a unique answer to the instruction. 
+                                Begin instruction: {prompt} End instruction. 
+                                Put the result of each instruction within a pair quote marks on a new line 
+                                as if each was the row of a single column csv and include no other text."""
         
         return scaffolded_prompt
 
