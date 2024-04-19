@@ -1,5 +1,5 @@
 # model_name: "openai-community/gpt2"
-model_name: "meta-llama/Llama-2-7b-hf"
+model_name: "meta-llama/Llama-2-7b-chat-hf"
 experiment_notes: Trying Eleni honesty contrastive with because.
 prompts_sheet: ../data/inputs/honesty_contrastive_formatted_final.csv
 use_gpu: true

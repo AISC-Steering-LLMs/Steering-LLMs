@@ -40,6 +40,10 @@ class ModelHandler:
                 'model': 'transformer',
                 'layers': 'h',
             },
+            "meta-llama/Llama-2-7b-chat-hf": {
+                'model': 'model',
+                'layers': 'layers',
+            },
             "meta-llama/Llama-2-7b-hf": {
                 'model': 'model',
                 'layers': 'layers',
@@ -167,46 +171,74 @@ class ModelHandler:
         """
 
         with self.model.generate(input, max_new_tokens=max_new_tokens):
-            self.model.lm_head.output.argmax(dim=-1)
+            # self.model.lm_head.output.argmax(dim=-1)
             token_ids = []
             for _ in tqdm(range(max_new_tokens - 1), desc="Computing Continuation"):
 
                 token_ids.append(self.model.lm_head.next().output.argmax(dim=-1).save())
-                if token_ids[0][-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
+                if token_ids[-1][-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
                     break
 
-            # output = self.model.generator.output.save()
+            output = self.model.generator.output.save()
 
         # print(output.shape)
-        # print("token_ids: ", token_ids)
-        output = self.model.tokenizer.batch_decode(torch.cat(token_ids[1:]))
+        # output = self.model.tokenizer.batch_decode(torch.cat(token_ids[1:]))
 
-        return output
+        return self.model.tokenizer.batch_decode(output)[0][len(input) + 4:]
 
     def compute_altered_continuation(self, max_new_tokens=256, input="", activations=None):
+        # input = "The Eiffel Tower is in the city of"
         model_key = self.get_property_name('model')
         layer_key = self.get_property_name('layers')
 
-        output = ""
-        with self.model.generate(input, max_new_tokens=max_new_tokens):
-            for idx, layer in enumerate(getattr(getattr(self.model, model_key), layer_key)):
-                layer.mlp.output[0][-1] += activations[idx]
-            
-            token_ids = self.model.lm_head.output.argmax(dim=-1)
+        output_tokens = []
+        output_str = ""
+
+        # for _ in tqdm(range(max_new_tokens - 1), desc="Computing Altered Continuation"):
+        #     _output_tokens = []
+        #     with self.model.trace(input + output_str):
+        #         # for idx, layer in enumerate(getattr(getattr(self.model, model_key), layer_key)):
+        #         #     hidden_states_pre = layer.mlp.output[0][-1]
+        #         #     noise = 0.01*torch.randn(hidden_states_pre.shape).to(activations[0].device)
+        #         #     layer.mlp.output[0][-1] = hidden_states_pre + noise
+                
+
+        #         _result = self.model.lm_head.output.save()
+        #         _token_ids = self.model.lm_head.output.argmax(dim=-1).save()
+
+        #     new_token = self.model.tokenizer.decode(_token_ids[0][-1])
+        #     output_str += new_token
+
+
+        # return output_str
+
+
+
+
+        with self.model.generate(input, max_new_tokens=max_new_tokens) as tracer:
             for _ in tqdm(range(max_new_tokens - 1), desc="Computing Altered Continuation"):
 
+                self.model.lm_head.next()
                 for idx, layer in enumerate(getattr(getattr(self.model, model_key), layer_key)):
-                    layer.mlp.output[0][-1] += activations[idx]
+                    hidden_states_pre = layer.mlp.output[0].clone().save()
+                    # noise = 0.005*torch.randn(hidden_states_pre.shape).to(activations[0].device)
+                    # layer.mlp.output[0] = hidden_states_pre + noise
+                    layer.mlp.output[0] = hidden_states_pre + activations[idx]
 
-                token_ids = self.model.lm_head.next().output.argmax(dim=-1)
+
+                    # if torch.any(torch.isnan(output_tensor)): #or torch.any(torch.isinf(output_tensor)): #or torch.any(output_tensor < 0):
+                    #     print("Invalid output detected: Contains NaN, Inf, or negative values.")
+                
+
+                # output_tokens.append(self.model.lm_head.next().output.argmax(dim=-1).clone().save())
                 # if token_ids[0][-1] in [self.model.tokenizer.bos_token, self.model.tokenizer.eos_token]:
                 #     break
 
             output = self.model.generator.output.save()
 
-        output = self.model.tokenizer.batch_decode(output)
-
-        return output
+        # print(output_tokens)
+        return self.model.tokenizer.batch_decode(output)[0][len(input) + 4:]
+        # return ''.join(self.model.tokenizer.batch_decode(output_tokens))
 
 
 
