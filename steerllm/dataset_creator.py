@@ -23,7 +23,7 @@ class DatasetCreator:
     property/concept. 
     """
 
-    def __init__(self, data_path: str, dataset_name: str) -> None:
+    def __init__(self, data_path: str) -> None:
         """
         Initializes the instance with directories for the new dataset.
 
@@ -39,7 +39,7 @@ class DatasetCreator:
 
 
 
-    def create_output_directories(self) -> str:
+    def create_output_directories(self, dataset_name) -> str:
         """
         Creates directories for storing outputs of a dataset creation run.
 
@@ -53,7 +53,8 @@ class DatasetCreator:
             A str containing the path to the dataset.
         """
         current_datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
-        dataset_dir = os.path.join(self.data_path, "datasets", current_datetime+"_"+self.dataset_name)
+        dataset_dir = os.path.join(self.data_path, "inputs/datasets/", dataset_name+"_"+current_datetime)
+        os.makedirs(dataset_dir, exist_ok=True) 
         return dataset_dir
 
 
@@ -74,11 +75,11 @@ class DatasetCreator:
             The scaffolded prompt.
         """
 
-        scaffolded_prompt = f"""Repeat the following instruction {examples_per_request} times, 
-                                always generating a unique answer to the instruction. 
-                                Begin instruction: {prompt} End instruction. 
-                                Put the result of each instruction within a pair quote marks on a new line 
-                                as if each was the row of a single column csv and include no other text."""
+        scaffolded_prompt = (f"Repeat the following instruction {examples_per_request} times, "
+                            "always generating a unique answer to the instruction. "
+                            f"Begin instruction: {prompt} End instruction. "
+                            "Put the result of each instruction within a pair quote marks on a new line "
+                            "as if each was the row of a single column csv and include no other text.")
         
         return scaffolded_prompt
 
