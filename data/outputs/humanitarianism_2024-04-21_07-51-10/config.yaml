@@ -1,0 +1,17 @@
+model_name: gpt2-small
+prompts_sheet: inputs/datasets/humanitarianism_contrastive-ab_explicit_end-biased_2024-04-21_06-10-02/humanitarianism_contrastive-ab_explicit_end-biased_2024-04-21_06-10-02_labelled.csv
+use_gpu: false
+write_cache: true
+evaluate_completion: false
+steering:
+  load: false
+  write: false
+  file: ../data/inputs/steering/gpt2-small_Good_PCA_rep_reader.pkl
+dim_red:
+  methods: null
+classifiers:
+  methods: null
+other_dim_red_analyses:
+  methods: null
+non_dimensionality_reduction:
+  methods: null

@@ -160,12 +160,14 @@ class DatasetCreator:
 
 
 
-    def create_csv_unlabelled(self, dataset_dir):
+    def create_csv_unlabelled(self, dataset_dir, dataset_name):
         # Get a list of all the files you want to process
         # Makes sure they all have the same prompt context
         # eg won;t mix up honest with justice etc
+        print(f"\ndataset_dir: {dataset_dir}")
+        print(f"\ndataset_name: {dataset_name}")
         files = [f for f in os.listdir(dataset_dir) 
-                            if f.endswith('.txt') and nh.filename in f.lower()]
+                            if f.endswith('.txt') and dataset_name in f.lower()]
 
         print(files)
 
@@ -177,7 +179,7 @@ class DatasetCreator:
         pattern = r'^\".*\",?[\r\n]*'
 
         # Open the master CSV file
-        with open(os.path.join(dataset_dir, self.dataset_name+"_unlabelled.csv"), "a") as master:
+        with open(os.path.join(dataset_dir, dataset_name+"_unlabelled.csv"), "a") as master:
             # Loop over the files
             for file in files:
                 # Open the current file and read its contents
@@ -198,11 +200,11 @@ class DatasetCreator:
 
 
 
-    def ask_openai(self, client, model, prompt):
+    def ask_openai(self, client, model, temperature, prompt):
         completion = client.chat.completions.create(
                     **{
                         "model": model,
-                        "temperature": 0, # For most deterministic results
+                        "temperature": temperature, # For most deterministic results
                         "seed": 0, # For reproducibility
                         "messages": [
                             {"role": "system", "content": "You are a helpful assistant."},
@@ -214,10 +216,16 @@ class DatasetCreator:
 
 
 
-    def create_csv_labelled(self, generated_dataset_file_path, hl_pairs):
+    def create_csv_labelled(self,
+                            dataset_dir,
+                            dataset_name_datetime_stamped,
+                            hl_pairs,
+                            client,
+                            model,
+                            temperature):
 
-        input_file_path = generated_dataset_file_path+"_unlabelled.csv"
-        output_file_path = generated_dataset_file_path+"_labelled.csv"
+        input_file_path = os.path.join(dataset_dir, f"{dataset_name_datetime_stamped}_unlabelled.csv")
+        output_file_path = os.path.join(dataset_dir, f"{dataset_name_datetime_stamped}_labelled.csv")
 
         with open(input_file_path, mode='r', newline='', encoding='utf-8') as infile, \
             open(output_file_path, mode='w', newline='', encoding='utf-8') as outfile:
@@ -225,6 +233,7 @@ class DatasetCreator:
             reader = csv.reader(infile)
             writer = csv.writer(outfile)
             
+            # Begin header row. 1st col always "prompt"
             header = ["prompt"]
 
             # Add a header
@@ -241,8 +250,14 @@ class DatasetCreator:
                     # Here you define the question you want to ask about each row
                     labelling_prompt = f"{labelling} {statement}"
                     print(labelling_prompt)
-                    response = self.ask_openai(labelling_prompt)
+                    response = self.ask_openai(client,
+                                                model,
+                                                temperature,
+                                                labelling_prompt)
                     # Add the OpenAI response to the row
                     row.append(response)
                 writer.writerow(row)
+
+    
+
 

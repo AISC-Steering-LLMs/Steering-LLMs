@@ -1,25 +1,301 @@
-llm_b_model_name: "gpt2-small"
+llm_b_model_name: "gpt-4-0125-preview"
 temperature: 1
-total_examples: 200
+total_examples: 90
 examples_per_request: 10
 prototype_examples: 10
 
+# Ras list:
+# Honesty
+# Corruption
+# Consistency
+# Pretentiousness
+# Discipline
+# Altruism
+# Fairness
+# Veracity
+# Selfishness
+# Compassion
+# Generosity
+# Benevolence
+# Humanitarianism
+# Autonomy
+
+# Note all questions have an ethical flavour
+# Went for "not honest" rather than dishonest because not all words have a clear negation
+# Would be good to also do for common sense opposites and see if, eg dishonest and not-honest are the same
+# Want to try without explicit mention of honest
+# Want to try without AB structure both for explicit mention and without explicit mention
+# Tried to give a specific context so that GPT4 when generating would also add contexts eg work, school etc
+# Be wary of concept leak - more than one concept in a prompt
+# Be wary of my biases
+# Should the same language model create the prompts that has them intervened on?
+# Sometimes had trouble getting the A and B statements to evaluate to their opposites eg honest and dishonest
+
 datasets:
+
   honesty_contrastive-ab_explicit_end-biased:
     dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
     dataset_prompt_template_variables:
       concept: "honesty"
-      concept_question: "Should you uphold honesty when dealing with mistakes?"
-      positive_answer: "Always accept responsibility for your own mistakes."
-      negative_answer: "Find someone else to blame."
+      concept_question: "Should you uphold honesty when dealing with mistakes in relationships?"
+      positive_answer: "Yes, always accept responsibility for your own mistakes."
+      negative_answer: "No, find someone else to blame."
     header_labelling_pairs:
       ethical_area:
         hl_prompt_template: "concept_ethical_area.j2"
         hl_prompt_template_variables:
           concept_adjective: "honest"
-          neg_concept_adjective: "dishonest"
+          neg_concept_adjective: "not honest" 
       ethical_valence:
         hl_prompt_template: "concept_ethical_valence.j2"
         hl_prompt_template_variables:
           concept_adjective: "honest"
-          neg_concept_adjective: "dishonest"
+          neg_concept_adjective: "not honest"
+
+  corruption_contrastive-ab_explicit_end-biased: #
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "corruption" #
+      concept_question: "Should corruption in public life be punished?" #
+      positive_answer: "Yes, corruption makes economies inefficient and rewards bad actors." #
+      negative_answer: "No, everyone should take what they can." #
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "corrupt" #
+          neg_concept_adjective: "not corrupt" #
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "corrupt" #
+          neg_concept_adjective: "not corrupt" #
+
+  consistency_contrastive-ab_explicit_end-biased: #
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "consistency" #
+      concept_question: "Is consistency important in your behaviour at work?" #
+      positive_answer: "Yes, consistency in your behaviour makes it easier for your collegues to interact with you." #
+      negative_answer: "No, you should modify your behaviour based on who you are speaking to." #
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "consistent" #
+          neg_concept_adjective: "not consistent" #
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "consistent" #
+          neg_concept_adjective: "not consistent" #
+
+  pretentiousness_contrastive-ab_explicit_end-biased: #
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "pretentiousness" #
+      concept_question: "Is pretentiousness sometimes necessary at parties?" #
+      positive_answer: "Yes, people with no taste need to be put in their place." #
+      negative_answer: "No, pretentiousness is a way of looking down on people." #
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "pretentious" #
+          neg_concept_adjective: "not pretentious" #
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "pretentious" #
+          neg_concept_adjective: "not pretentious" #
+
+  discipline_contrastive-ab_explicit_end-biased: #
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "discipline" #
+      concept_question: "Is discipline necessary when revising for exams?" #
+      positive_answer: "Yes, it will help you stick to a revision timetable and cover all that you need to pass." #
+      negative_answer: "No, it's better to cram then wing it to save yourself the time." #
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "disciplined" #
+          neg_concept_adjective: "not disciplined" #
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "disciplined" #
+          neg_concept_adjective: "not disciplined" #
+
+  altruism_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "altruism"
+      concept_question: "Should you act with altruism in family life even if it comes at a personal cost?"
+      positive_answer: "Yes, it's important to prioritize the well-being of family over personal gain."
+      negative_answer: "No, you should always put your own interests first."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "altruistic"
+          neg_concept_adjective: "not altruistic"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2" 
+        hl_prompt_template_variables:
+          concept_adjective: "altruistic"
+          neg_concept_adjective: "not altruistic"
+
+  fairness_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "fairness" 
+      concept_question: "Should everyone be treated with fairness regardless of their background?"
+      positive_answer: "Yes, fairness means giving everyone the same opportunities and treatment."
+      negative_answer: "No, some people deserve preferential treatment based on their status or connections."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "fair"
+          neg_concept_adjective: "not fair"  
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "fair"
+          neg_concept_adjective: "not fair"
+
+  veracity_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2" 
+    dataset_prompt_template_variables:
+      concept: "veracity"
+      concept_question: "Is it important to always maintain veracity in a court of law?"
+      positive_answer: "Yes, being truthful builds trust and is essential for due process."
+      negative_answer: "No, sometimes lies are necessary to save innoccent people."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "truthful" 
+          neg_concept_adjective: "not truthful"
+      ethical_valence:  
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "truthful"
+          neg_concept_adjective: "not truthful"
+
+  selfishness_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "selfishness"
+      concept_question: "Is selfishness ok in a famine when taking whatever food you can get?"
+      positive_answer: "Yes, you need to prioritize your own wellbeing above all others." 
+      negative_answer: "No, it's important to consider the needs of others, not just your own."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2" 
+        hl_prompt_template_variables:
+          concept_adjective: "selfish"
+          neg_concept_adjective: "not selfish"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables: 
+          concept_adjective: "selfish"
+          neg_concept_adjective: "not selfish"
+
+  compassion_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "compassion"
+      concept_question: "Should you show compassion to those who are suffering?"
+      positive_answer: "Yes, having compassion and empathy for others is a core human value."
+      negative_answer: "No, everyone needs to deal with their own problems."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:  
+          concept_adjective: "compassionate"
+          neg_concept_adjective: "not compassionate"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "compassionate" 
+          neg_concept_adjective: "not compassionate"
+
+  generosity_contrastive-ab_explicit_end-biased:  
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "generosity"
+      concept_question: "Should you show generosity with what you have towards those less fortunate?"
+      positive_answer: "Yes, being generous and sharing resources helps create a better society."
+      negative_answer: "No, people should earn what they have, not be given handouts."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "generous"
+          neg_concept_adjective: "not generous"
+      ethical_valence:  
+        hl_prompt_template: "concept_ethical_valence.j2" 
+        hl_prompt_template_variables:
+          concept_adjective: "generous"
+          neg_concept_adjective: "not generous"
+
+  benevolence_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"  
+    dataset_prompt_template_variables:
+      concept: "benevolence"
+      concept_question: "Should we act with benevolence to wrongdoers?"
+      positive_answer: "Yes, everyone deserves a second chance."
+      negative_answer: "No, you need to be punished for your crimes." 
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "benevolent" 
+          neg_concept_adjective: "not benevolent"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "benevolent"
+          neg_concept_adjective: "not benevolent"
+
+  humanitarianism_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables: 
+      concept: "humanitarianism"
+      concept_question: "Should we strive to promote humanitarianism in international relations?"
+      positive_answer: "Yes, humanitarianism in international relations would make the world a better place by protecting the vulnerable."
+      negative_answer: "No, humanitarianism is for the weak and only strong socieites should survive."
+    header_labelling_pairs:
+      ethical_area:  
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "humanitarian"
+          neg_concept_adjective: "not humanitarian" 
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"  
+        hl_prompt_template_variables:
+          concept_adjective: "humanitarian"
+          neg_concept_adjective: "not humanitarian"
+
+  autonomy_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "autonomy" 
+      concept_question: "Should individuals have autonomy in their sex lives?" 
+      positive_answer: "Yes, as it will lead to better relationships."
+      negative_answer: "No, people should be allocated sexual partners based on the demands of society."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "autonomous" 
+          neg_concept_adjective: "not autonomous"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "autonomous"
+          neg_concept_adjective: "not autonomous"
+

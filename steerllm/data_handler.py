@@ -16,7 +16,7 @@ class Activation:
     # hidden_states: List[np.ndarray] = None
     prompt: str
     ethical_area: str
-    positive: bool
+    ethical_valence: bool
     raw_activations: Any = None
     hidden_states: List[np.ndarray] = None
 
@@ -183,10 +183,10 @@ class DataHandler:
             placeholders for raw activations and hidden states.
         """
         activations_cache = []
-        for prompt, ethical_area, positive in zip(prompts_dict[DataHandler.PROMPT_COLUMN],
+        for prompt, ethical_area, ethical_valence in zip(prompts_dict[DataHandler.PROMPT_COLUMN],
                                                 prompts_dict[DataHandler.ETHICAL_AREA_COLUMN],
                                                 prompts_dict[DataHandler.POS_COLUMN]):
-            act = Activation(prompt, ethical_area, bool(positive), None, [])
+            act = Activation(prompt, ethical_area, bool(ethical_valence), None, [])
             activations_cache.append(act)
         return activations_cache
 

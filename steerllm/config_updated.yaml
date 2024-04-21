@@ -8,10 +8,22 @@
 # model_name: "meta-llama/Llama-2-13b-hf"
 # model_name: "gpt2-xl"
 model_name: "gpt2-small"
-experiment_notes: "Trying Eleni honesty contrastive with because."
-prompts_sheet: "../data/inputs/terror_labelled.csv"
+# prompts_sheet: "inputs/datasets/autonomy_contrastive-ab_explicit_end-biased_2024-04-21_06-18-12/autonomy_contrastive-ab_explicit_end-biased_2024-04-21_06-18-12_labelled.csv"
+# prompts_sheet: "inputs/datasets/altruism_contrastive-ab_explicit_end-biased_2024-04-21_05-09-20/altruism_contrastive-ab_explicit_end-biased_2024-04-21_05-09-20_labelled.csv"
+# prompts_sheet: "inputs/datasets/benevolence_contrastive-ab_explicit_end-biased_2024-04-21_06-00-57/benevolence_contrastive-ab_explicit_end-biased_2024-04-21_06-00-57_labelled.csv"
+# prompts_sheet: "inputs/datasets/compassion_contrastive-ab_explicit_end-biased_2024-04-21_05-44-36/compassion_contrastive-ab_explicit_end-biased_2024-04-21_05-44-36_labelled.csv"
+# prompts_sheet: "inputs/datasets/consistency_contrastive-ab_explicit_end-biased_2024-04-21_04-44-34/consistency_contrastive-ab_explicit_end-biased_2024-04-21_04-44-34_labelled.csv"
+# prompts_sheet: "inputs/datasets/corruption_contrastive-ab_explicit_end-biased_2024-04-21_04-36-26/corruption_contrastive-ab_explicit_end-biased_2024-04-21_04-36-26_labelled.csv"
+# prompts_sheet: "inputs/datasets/discipline_contrastive-ab_explicit_end-biased_2024-04-21_05-01-44/discipline_contrastive-ab_explicit_end-biased_2024-04-21_05-01-44_labelled.csv"
+# prompts_sheet: "inputs/datasets/fairness_contrastive-ab_explicit_end-biased_2024-04-21_05-17-18/fairness_contrastive-ab_explicit_end-biased_2024-04-21_05-17-18_labelled.csv"
+# prompts_sheet: "inputs/datasets/generosity_contrastive-ab_explicit_end-biased_2024-04-21_05-53-11/generosity_contrastive-ab_explicit_end-biased_2024-04-21_05-53-11_labelled.csv"
+# prompts_sheet: "inputs/datasets/honesty_contrastive-ab_explicit_end-biased_2024-04-21_04-28-20/honesty_contrastive-ab_explicit_end-biased_2024-04-21_04-28-20_labelled.csv"
+# prompts_sheet: "inputs/datasets/humanitarianism_contrastive-ab_explicit_end-biased_2024-04-21_06-10-02/humanitarianism_contrastive-ab_explicit_end-biased_2024-04-21_06-10-02_labelled.csv"
+# prompts_sheet: "inputs/datasets/pretentiousness_contrastive-ab_explicit_end-biased_2024-04-21_04-53-06/pretentiousness_contrastive-ab_explicit_end-biased_2024-04-21_04-53-06_labelled.csv"
+# prompts_sheet: "inputs/datasets/selfishness_contrastive-ab_explicit_end-biased_2024-04-21_05-35-21/selfishness_contrastive-ab_explicit_end-biased_2024-04-21_05-35-21_labelled.csv"
+prompts_sheet: "inputs/datasets/veracity_contrastive-ab_explicit_end-biased_2024-04-21_05-25-53/veracity_contrastive-ab_explicit_end-biased_2024-04-21_05-25-53_labelled.csv"
 use_gpu: False
-write_cache: False
+write_cache: True
 evaluate_completion: False
 steering:
   load: False
@@ -20,30 +32,30 @@ steering:
 
 dim_red:
   methods:
-    pca:
-      n_components: 2
-      random_state: 42
-    tsne:
-      n_components: 2
-      perplexity: 30
-    feature_agglomeration:
-      n_clusters: 2
+    # pca:
+    #   n_components: 2
+    #   random_state: 42
+    # tsne:
+    #   n_components: 2
+    #   perplexity: 30
+    # feature_agglomeration:
+    #   n_clusters: 2
 
 
 classifiers:
   methods:
-    - logistic_regression
-    - decision_tree
-    - random_forest
-    - svc
-    - knn
-    - gradient_boosting
+    # - logistic_regression
+    # - decision_tree
+    # - random_forest
+    # - svc
+    # - knn
+    # - gradient_boosting
 
 other_dim_red_analyses:
   methods:
-    - random_projections_analysis
+    # - random_projections_analysis
 
 non_dimensionality_reduction:
   methods:
-    - raster_plot
-    - probe_hidden_states
+    # - raster_plot
+    # - probe_hidden_states
