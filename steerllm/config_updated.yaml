@@ -7,7 +7,7 @@
 # model_name: "meta-llama/Llama-2-7b-hf"
 # model_name: "meta-llama/Llama-2-13b-hf"
 # model_name: "gpt2-xl"
-model_name: "gpt2-small"
+
 # prompts_sheet: "inputs/datasets/autonomy_contrastive-ab_explicit_end-biased_2024-04-21_06-18-12/autonomy_contrastive-ab_explicit_end-biased_2024-04-21_06-18-12_labelled.csv"
 # prompts_sheet: "inputs/datasets/altruism_contrastive-ab_explicit_end-biased_2024-04-21_05-09-20/altruism_contrastive-ab_explicit_end-biased_2024-04-21_05-09-20_labelled.csv"
 # prompts_sheet: "inputs/datasets/benevolence_contrastive-ab_explicit_end-biased_2024-04-21_06-00-57/benevolence_contrastive-ab_explicit_end-biased_2024-04-21_06-00-57_labelled.csv"
@@ -21,7 +21,14 @@ model_name: "gpt2-small"
 # prompts_sheet: "inputs/datasets/humanitarianism_contrastive-ab_explicit_end-biased_2024-04-21_06-10-02/humanitarianism_contrastive-ab_explicit_end-biased_2024-04-21_06-10-02_labelled.csv"
 # prompts_sheet: "inputs/datasets/pretentiousness_contrastive-ab_explicit_end-biased_2024-04-21_04-53-06/pretentiousness_contrastive-ab_explicit_end-biased_2024-04-21_04-53-06_labelled.csv"
 # prompts_sheet: "inputs/datasets/selfishness_contrastive-ab_explicit_end-biased_2024-04-21_05-35-21/selfishness_contrastive-ab_explicit_end-biased_2024-04-21_05-35-21_labelled.csv"
-prompts_sheet: "inputs/datasets/veracity_contrastive-ab_explicit_end-biased_2024-04-21_05-25-53/veracity_contrastive-ab_explicit_end-biased_2024-04-21_05-25-53_labelled.csv"
+# prompts_sheet: "inputs/datasets/veracity_contrastive-ab_explicit_end-biased_2024-04-21_05-25-53/veracity_contrastive-ab_explicit_end-biased_2024-04-21_05-25-53_labelled.csv"
+
+model_name: "gpt2-small"
+prompts_sheets:
+  - "honesty.csv"
+  - "integrity.csv"
+  - "corruption.csv"
+  - "selfishness.csv"
 use_gpu: False
 write_cache: True
 evaluate_completion: False

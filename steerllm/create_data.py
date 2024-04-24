@@ -12,6 +12,7 @@ from dataset_creator import DatasetCreator
 # Constants - things we don't want/need to configure in config.yaml
 SRC_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(os.path.dirname(SRC_PATH), 'data')
+CONFIG_DIR = os.path.join(SRC_PATH, "dataset_gen_configs")
 DATASET_TEMPLATE_DIR = os.path.join(DATA_PATH, "inputs/templates/dataset_prompt_templates")
 HEADER_LABELING_TEMPLATE_DIR = os.path.join(DATA_PATH, "inputs/templates/header_labelling_prompt_templates")
 
@@ -24,7 +25,9 @@ def get_user_response():
         else:
             print("Invalid input. Please enter 'y' or 'n'.")
 
-@hydra.main(version_base=None, config_path=".", config_name="config_dataset.yaml")
+@hydra.main(version_base=None,
+            config_path=CONFIG_DIR,
+            config_name="concept_contrastive_explicit_basic.yaml")
 def main(cfg: DictConfig) -> None: 
 
     api_key = os.environ["OPENAI_API_KEY"]
@@ -40,11 +43,14 @@ def main(cfg: DictConfig) -> None:
     # Load the dataset configuration info
     env_dataset = Environment(loader=FileSystemLoader(DATASET_TEMPLATE_DIR))
     env_header_labelling = Environment(loader=FileSystemLoader(HEADER_LABELING_TEMPLATE_DIR))
+    dataset_templates = {}
     rendered_prompts = {}
     rendered_header_labelling_pairs = {}
+    
 
     # Loop through requested datasets to build prompts
     for dataset_name, dataset_config in cfg.datasets.items():
+        dataset_templates[dataset_name] = os.path.splitext(dataset_config.dataset_prompt_template)[0]
         dataset_template = env_dataset.get_template(dataset_config.dataset_prompt_template)
         dataset_prompt = dataset_template.render(**dataset_config.dataset_prompt_template_variables)
         dataset_prompt = dataset_prompt.replace("\n", " ")
@@ -61,6 +67,9 @@ def main(cfg: DictConfig) -> None:
 
         rendered_header_labelling_pairs[dataset_name] = dataset_header_labelling_pairs
 
+    print("\nDataset Templates:")
+    print(dataset_templates)
+
     print("\nRendered Prompts:")
     print(rendered_prompts)
 
@@ -70,6 +79,8 @@ def main(cfg: DictConfig) -> None:
     dataset_creator = DatasetCreator(DATA_PATH)
 
     for dataset_name, prompt in rendered_prompts.items():
+
+        # ToDo: Need to send template name to create_output_directories
 
         dataset_dir = dataset_creator.create_output_directories(dataset_name)
         print(f"\ndataset_dir: {dataset_dir}")

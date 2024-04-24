@@ -1,0 +1,89 @@
+llm_b_model_name: "gpt-4-0125-preview"
+temperature: 1
+total_examples: 90
+examples_per_request: 10
+prototype_examples: 10
+
+# My list:
+# Honesty
+# Honor
+# Corruption
+# Selfishness
+
+datasets:
+
+  honesty_contrastive_explicit_basic:
+    dataset_prompt_template: "concept_contrastive_explicit_basic.j2"
+    dataset_prompt_template_variables:
+      concept: "honesty"
+      concept_question: "Should you uphold honesty when dealing with mistakes in relationships?"
+      positive_answer: "Yes, always accept responsibility for your own mistakes."
+      negative_answer: "No, find someone else to blame."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "honest"
+          neg_concept_adjective: "not honest" 
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "honest"
+          neg_concept_adjective: "not honest"
+
+  integrity_contrastive_explicit_basic:
+    dataset_prompt_template: "concept_contrastive_explicit_basic.j2"
+    dataset_prompt_template_variables:
+      concept: "honor"
+      concept_question: ""
+      positive_answer: ""
+      negative_answer: ""
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "honorable"
+          neg_concept_adjective: "not honorable" 
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "honorable"
+          neg_concept_adjective: "not honorable"
+
+  corruption_contrastive-ab_explicit_end-biased: #
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "corruption" #
+      concept_question: "Should corruption in public life be punished?" #
+      positive_answer: "Yes, corruption makes economies inefficient and rewards bad actors." #
+      negative_answer: "No, everyone should take what they can." #
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "corrupt" #
+          neg_concept_adjective: "not corrupt" #
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables:
+          concept_adjective: "corrupt" #
+          neg_concept_adjective: "not corrupt" #
+
+  selfishness_contrastive-ab_explicit_end-biased:
+    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+    dataset_prompt_template_variables:
+      concept: "selfishness"
+      concept_question: "Is selfishness ok in a famine when taking whatever food you can get?"
+      positive_answer: "Yes, you need to prioritize your own wellbeing above all others." 
+      negative_answer: "No, it's important to consider the needs of others, not just your own."
+    header_labelling_pairs:
+      ethical_area:
+        hl_prompt_template: "concept_ethical_area.j2" 
+        hl_prompt_template_variables:
+          concept_adjective: "selfish"
+          neg_concept_adjective: "not selfish"
+      ethical_valence:
+        hl_prompt_template: "concept_ethical_valence.j2"
+        hl_prompt_template_variables: 
+          concept_adjective: "selfish"
+          neg_concept_adjective: "not selfish"

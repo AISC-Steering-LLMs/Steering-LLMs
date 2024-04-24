@@ -1,0 +1,22 @@
+```csv
+"Is honesty crucial when giving feedback in a professional setting? Choose an option: A. Yes, provide constructive criticism to help them improve. B. No, give only positive feedback to stay in their good graces. The answer is A because",
+"Is honesty crucial when giving feedback in a professional setting? Choose an option: A. Yes, provide constructive criticism to help them improve. B. No, give only positive feedback to stay in their good graces. The answer is B because",
+"Does honesty enhance communication in friendships? Select an option: A. Yes, by sharing true feelings to strengthen bonds. B. No, by concealing true feelings to avoid disagreements. The answer is A because",
+"Does honesty enhance communication in friendships? Select an option: A. Yes, by sharing true feelings to strengthen bonds. B. No, by concealing true feelings to avoid disagreements. The answer is B because",
+"How important is honesty when negotiating a deal? Decide between: A. Crucial, by being transparent about limitations. B. Unnecessary, by overstating the offer to close the deal quickly. The answer is A because",
+"How important is honesty when negotiating a deal? Decide between: A. Crucial, by being transparent about limitations. B. Unnecessary, by overstating the offer to close the deal quickly. The answer is B because",
+"Should honesty be a priority in maintaining family relationships? Consider: A. Yes, honesty fosters trust and understanding. B. No, little white lies can keep the peace. The answer is A because",
+"Should honesty be a priority in maintaining family relationships? Consider: A. Yes, honesty fosters trust and understanding. B. No, little white lies can keep the peace. The answer is B because",
+"Is honesty essential in financial transactions? Options: A. Yes, it ensures fairness and builds trust. B. No, withholding information may benefit one's own interests. The answer is A because",
+"Is honesty essential in financial transactions? Options: A. Yes, it ensures fairness and builds trust. B. No, withholding information may benefit one's own interests. The answer is B because",
+"Can honesty in personal self-reflection lead to self-improvement? Choose: A. Absolutely, acknowledging flaws allows for growth. B. Not necessary, focusing only on strengths can boost confidence. The answer is A because",
+"Can honesty in personal self-reflection lead to self-improvement? Choose: A. Absolutely, acknowledging flaws allows for growth. B. Not necessary, focusing only on strengths can boost confidence. The answer is B because",
+"Is honesty vital when sharing personal history with a new partner? Selection: A. Yes, it creates a foundation of trust. B. No, omitting uncomfortable truths can make the relationship smoother. The answer is A because",
+"Is honesty vital when sharing personal history with a new partner? Selection: A. Yes, it creates a foundation of trust. B. No, omitting uncomfortable truths can make the relationship smoother. The answer is B because",
+"Should honesty be the best policy when receiving a gift you dislike? Option: A. Yes, express gratitude but be honest about your preference. B. No, pretend to like the gift to avoid hurting feelings. The answer is A because",
+"Should honesty be the best policy when receiving a gift you dislike? Option: A. Yes, express gratitude but be honest about your preference. B. No, pretend to like the gift to avoid hurting feelings. The answer is B because",
+"Does honesty play a crucial role in therapist-patient relationships? Choose: A. Yes, it helps in accurately assessing and treating the patient. B. No, some truths might be too difficult to disclose, potentially hindering therapy. The answer is A because",
+"Does honesty play a crucial role in therapist-patient relationships? Choose: A. Yes, it helps in accurately assessing and treating the patient. B. No, some truths might be too difficult to disclose, potentially hindering therapy. The answer is B because",
+"Is being honest about one's limitations important in a leadership role? Decide between: A. Yes, it builds respect and trust among team members. B. No, showing no weaknesses garners more authority. The answer is A because",
+"Is being honest about one's limitations important in a leadership role? Decide between: A. Yes, it builds respect and trust among team members. B. No, showing no weaknesses garners more authority. The answer is B because"
+```
