@@ -1,26 +1,20 @@
-"What role does honesty play in building trust in a relationship? Definitely by withholding information to avoid conflict because,","Bad",0,""
-"What role does honesty play in building trust in a relationship? By being open and transparent to foster understanding because,","Good",1
-
 Could you please write one question about {{concept}} with exactly the same structure as in my example?
 Please be as creative with your question as possible but always include the word "{{concept}}" in it.
 Your question may be longer or shorter than my example and can cover any context where {{concept}} is relevant.
-The question should be asked exactly the same way twice, differing only in the ending.
-The ending is either "The answer is A because" or "The answer is B because".
-The A. option should embody {{concept}}. The B. option should embody the opposite of {{concept}}.
+The question should be asked exactly the same way twice.
+The first time it is asked you should follow with a positive response to the question in favour of {{concept}}.
+The second time it is asked you should follow with a negative response to the question in favour of {{opposite_concept}}.
 Here is my example:
 {{concept_question}}
-Select from the following options:
-A. {{positive_answer}}
-B. {{negative_answer}}
-The answer is A because
+{{answer}}
 {{concept_question}}
-Select from the following options:
-A. {{positive_answer}}
-B. {{negative_answer}}
-The answer is B because
+{{opposite_answer}}
 End of example.
 Format your output as a single column CSV.
-Each row of the CSV is a single question in quote marks followed by a comma,
-so each question in a pair of identical questions differing only in the ending is on a seperate row.
+Each row of the CSV is a single question followed by its answer together in quote marks
+then followed by a comma.
+You will therefore have two rows in your CSV,
+the first will be the question and answer in favour of {{concept}},
+the second will be the question and answer in favour of {{opposite_concept}}.
 Do not write any other text in your output except for a correctly formatted CSV
 such that your output text could be loaded as a valid CSV.
