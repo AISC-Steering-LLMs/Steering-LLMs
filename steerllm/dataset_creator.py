@@ -23,7 +23,7 @@ class DatasetCreator:
     property/concept. 
     """
 
-    def __init__(self, data_path: str) -> None:
+    def __init__(self, data_path: str, current_datetime: str) -> None:
         """
         Initializes the instance with directories for the new dataset.
 
@@ -36,10 +36,11 @@ class DatasetCreator:
         None
         """
         self.data_path = data_path
+        self.current_datetime = current_datetime
 
 
 
-    def create_output_directories(self, dataset_name) -> str:
+    def create_output_directories(self, template_name, dataset_name) -> str:
         """
         Creates directories for storing outputs of a dataset creation run.
 
@@ -52,8 +53,11 @@ class DatasetCreator:
         str
             A str containing the path to the dataset.
         """
-        current_datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
-        dataset_dir = os.path.join(self.data_path, "inputs/datasets/", dataset_name+"_"+current_datetime)
+        dataset_dir = os.path.join(self.data_path,
+                                   "inputs/datasets/",
+                                   template_name,
+                                   self.current_datetime,
+                                   dataset_name)
         os.makedirs(dataset_dir, exist_ok=True) 
         return dataset_dir
 

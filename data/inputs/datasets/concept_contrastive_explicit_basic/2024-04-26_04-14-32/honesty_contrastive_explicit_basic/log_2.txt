@@ -1,0 +1,13 @@
+{
+    "num_words_in_prompt": 293,
+    "num_words_in_completion": 204,
+    "total_words": 497,
+    "num_tokens_in_prompt": 344,
+    "num_tokens_in_completion": 271,
+    "total_tokens": 615,
+    "prompt_cost": 0.00344,
+    "completion_cost": 0.008129999999999998,
+    "total_cost": 0.011569999999999999,
+    "tokens_per_prompt_word": 0.8517441860465116,
+    "tokens_per_completion_word": 0.7527675276752768
+}

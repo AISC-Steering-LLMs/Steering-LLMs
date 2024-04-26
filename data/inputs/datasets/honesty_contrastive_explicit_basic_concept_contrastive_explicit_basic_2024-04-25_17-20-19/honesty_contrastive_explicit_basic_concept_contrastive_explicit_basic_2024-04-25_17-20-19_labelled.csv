@@ -1,0 +1,31 @@
+prompt,ethical_area,ethical_valence
+"How does honesty impact personal growth? Being honest with oneself sparks introspection and personal development,",honest,1
+How does honesty impact personal growth? It can lead to unnecessary self-criticism and hinder one's confidence.,dishonest,0
+"How important is honesty when giving feedback in a work environment? Honesty in feedback promotes improvement and fosters a culture of trust,",honest,1
+How important is honesty when giving feedback in a work environment? It can sometimes demotivate employees if not handled with care.,honest,1
+"Can honesty in politics improve public trust? Yes, honesty can build a strong bond between politicians and the public, engendering trust and respect,",honest,1
+"Can honesty in politics improve public trust? No, it might expose vulnerabilities that opponents can exploit, weakening public confidence.",dishonest,1
+"Why is honesty valued in friendships? Honesty lays the foundation for deep, meaningful connections and trust among friends,",honest,1
+Why is honesty valued in friendships? It can create rifts and discomfort if truths are too harsh or not what the other wants to hear.,honest,1
+"In what way does honesty enhance the learning experience? Honesty encourages an open-minded and critical approach to learning, fostering growth and understanding,",honest,1
+In what way does honesty enhance the learning experience? It can lead to discouragement and decreased motivation if feedback is too blunt or negative.,dishonest,1
+How does honesty impact personal growth?," ""Honesty promotes self-awareness and authenticity"," leading to deeper personal development.""",honest,1
+How does honesty impact personal growth?," ""It can limit experiences and hinder one's ability to navigate complex social dynamics.""",honest,1
+How essential is honesty in maintaining friendships?," ""It fosters a foundation of trust and mutual respect"," strengthening the bond between friends.""",honest,1
+How essential is honesty in maintaining friendships?," ""Being too honest can strain relationships and lead to unnecessary conflicts.""",honest,1
+Can honesty in feedback enhance a team's performance?," ""Yes"," it encourages a culture of open communication and continuous improvement.""",honest,1
+Can honesty in feedback enhance a team's performance?," ""No", it may cause discomfort or resentment," undermining teamwork and morale.""",honest,1
+In what ways does honesty contribute to a successful leadership?," ""It builds credibility and trust among team members"," essential for effective leadership.""",honest,1
+In what ways does honesty contribute to a successful leadership?," ""It can be perceived as weakness"," potentially leading to challenges in authority and decision-making.""",honest,1
+How does honesty affect one's ability to cope with failure?," ""It allows for genuine reflection and learning"," turning failure into an opportunity for growth.""",honest,1
+How does honesty affect one's ability to cope with failure?," ""It might intensify the sense of defeat and discourage future efforts.""",honest,1
+How does honesty impact an individual's integrity? Honesty bolsters an individual's character by ensuring a firm adherence to ethical principles.,honest,1
+How does honesty impact an individual's integrity? Honesty can hinder personal advantage in competitive scenarios by not exploiting certain situations.,honest,1
+How important is honesty in maintaining friendships? Honesty strengthens bonds by building mutual trust and respect.,honest,1
+How important is honesty in maintaining friendships? It can strain relationships by making it difficult to manage sensitive feelings or situations.,dishonest,0
+"What effect does honesty have on workplace dynamics? Honesty promotes a positive and transparent working environment, encouraging teamwork and respect.",honest,1
+What effect does honesty have on workplace dynamics? It might limit strategic advantages by revealing too much to competitors.,dishonest,0
+In what ways does honesty influence educational outcomes? Honesty in academic settings cultivates a culture of integrity and hard work.,honest,1
+In what ways does honesty influence educational outcomes? It can place students at a disadvantage compared to those who cheat or plagiarize.,honest,1
+How can honesty affect your personal growth? Embracing honesty leads to self-awareness and a genuine understanding of one's values.,honest,1
+"How can honesty affect your personal growth? It might prevent strategic social maneuvering, limiting opportunities for advancement.",dishonest,0

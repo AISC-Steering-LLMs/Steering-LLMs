@@ -1,0 +1,31 @@
+prompt,ethical_area,ethical_valence
+"How does honesty impact the effectiveness of a team?,Honesty fosters a culture of trust and reliability, which enhances teamwork and productivity.",honest,1
+"How does honesty impact the effectiveness of a team?,In some cases, honesty might create conflict or discomfort among team members, reducing harmony and efficiency.",honest,1
+"How important is honesty in maintaining friendships?,Honesty deepens bonds by ensuring a foundation of trust and authenticity.",honest,1
+"How important is honesty in maintaining friendships?,Too much honesty can sometimes strain friendships by bringing up uncomfortable truths.",dishonest,1
+"What role does honesty play in a successful business?,Honesty builds a credible reputation, attracting loyal customers and dedicated employees.",honest,1
+"What role does honesty play in a successful business?,Excessive honesty, especially about challenges, can deter investors or customers, potentially harming the business.",dishonest,0
+"In what ways does honesty contribute to personal growth?,Honesty encourages self-awareness and authenticity, fostering personal development and fulfillment.",honest,1
+"In what ways does honesty contribute to personal growth?,Being overly honest with oneself can lead to self-doubt and hinder one's confidence and growth.",honest,1
+"How crucial is honesty in the context of self-improvement?,Honesty allows individuals to recognize their flaws and areas for improvement, enabling meaningful progress.",honest,1
+"How crucial is honesty in the context of self-improvement?,Sometimes, dishonesty can protect our self-esteem by masking our shortcomings and failures.",dishonest,1
+"How does honesty impact personal growth and self-improvement?, Honesty fosters self-awareness and personal development, leading to a more fulfilling life.",honest,1
+"How does honesty impact personal growth and self-improvement?, Sometimes, being dishonest with ourselves can temporarily shield us from painful truths and offer a sense of comfort.",honest,1
+"How can honesty in feedback propel professional advancement?, Honesty in feedback can highlight areas for improvement and catalyze skill development, enhancing career progression.",honest,1
+"How can honesty in feedback propel professional advancement?, In some environments, dishonesty in feedback may protect relationships and prevent conflict, potentially aiding in short-term professional networking.",honest,1
+"In what ways does honesty influence the depth of friendships?, Honesty deepens bonds by building trust and enabling genuine connections between friends.",honest,1
+"In what ways does honesty influence the depth of friendships?, Excessive honesty might strain friendships by introducing unnecessary harshness or discomfort.",honest,1
+"How crucial is honesty in maintaining the integrity of scientific research?, Honesty in scientific research ensures accuracy, reliability, and the advancement of knowledge for the greater good.",honest,1
+"How crucial is honesty in maintaining the integrity of scientific research?, In highly competitive fields, a degree of dishonesty might be seen as necessary to secure funding or publish results faster.",dishonest,0
+"What role does honesty play in the sustainability of a business?, Honesty fosters a strong reputation, loyal customers, and dedicated employees, contributing to long-term success.",honest,1
+"What role does honesty play in the sustainability of a business?, Strategic dishonesty can sometimes provide a competitive edge or protect the company from short-term downturns.",dishonest,0
+"Can honesty in personal finances lead to a more harmonious marriage? Honestly discussing finances can build a foundation of trust and partnership, reducing conflicts. ",honest,1
+"Can honesty in personal finances lead to a more harmonious marriage? Being too honest about finances might create tension and conflict, undermining marital harmony. ",dishonest,1
+"How does honesty impact the effectiveness of a team at work? Honesty fosters a culture of transparency and trust, leading to more cohesive and effective teamwork. ",honest,1
+"How does honesty impact the effectiveness of a team at work? Excessive honesty can lead to hurt feelings, resentment, and a breakdown in teamwork and morale. ",honest,1
+"Does honesty enhance the depth of a friendship? Sharing truths honestly can deepen bonds of trust, making friendships more meaningful and resilient. ",honest,1
+"Does honesty enhance the depth of a friendship? Sometimes honesty can strain a friendship, especially if the truth is not what the other person wants to hear. ",honest,1
+"In what ways does honesty contribute to personal growth? Embracing honesty encourages self-reflection and personal development, leading to a more authentic life. ",honest,1
+In what ways does honesty contribute to personal growth? Insisting on honesty can sometimes limit personal growth by preventing the exploration of diverse perspectives and experiences. ,dishonest,0
+"How essential is honesty in the therapeutic relationship between a psychologist and their client? Honesty is crucial for building trust and facilitating effective therapy, enabling real progress and healing. ",honest,1
+"How essential is honesty in the therapeutic relationship between a psychologist and their client? Too much honesty from the client might overwhelm the therapeutic process, making it difficult for the psychologist to guide effectively. ",dishonest,0

@@ -6,6 +6,7 @@ from openai import OpenAI
 import logging
 import math
 from jinja2 import Environment, FileSystemLoader
+import datetime
 
 from dataset_creator import DatasetCreator
 
@@ -76,13 +77,14 @@ def main(cfg: DictConfig) -> None:
     print("\nRendered Header Labelling Pairs:")
     print(rendered_header_labelling_pairs)   
     
-    dataset_creator = DatasetCreator(DATA_PATH)
+    current_datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
+    dataset_creator = DatasetCreator(DATA_PATH, current_datetime)
 
     for dataset_name, prompt in rendered_prompts.items():
 
         # ToDo: Need to send template name to create_output_directories
 
-        dataset_dir = dataset_creator.create_output_directories(dataset_name)
+        dataset_dir = dataset_creator.create_output_directories(dataset_templates[dataset_name], dataset_name)
         print(f"\ndataset_dir: {dataset_dir}")
 
         dataset_name_datetime_stamped = os.path.basename(dataset_dir)

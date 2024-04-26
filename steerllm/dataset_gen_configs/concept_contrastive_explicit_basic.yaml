@@ -55,40 +55,40 @@ datasets:
           concept_adjective: "honorable"
           neg_concept_adjective: "dishonorable"
 
-  fairness_contrastive-ab_explicit_end-biased: #
-    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
-    dataset_prompt_template_variables:
-      concept: "fairness" #
-      concept_question: "Should fairness be encouraged in business?" #
-      positive_answer: "Fairness should be encourged to prevent bad actors from exploiting the vulnerable." #
-      negative_answer: "No, fairness reduces compeativeness." #
-    header_labelling_pairs:
-      ethical_area:
-        hl_prompt_template: "concept_ethical_area.j2"
-        hl_prompt_template_variables:
-          concept_adjective: "fair" #
-          neg_concept_adjective: "unfair" #
-      ethical_valence:
-        hl_prompt_template: "concept_ethical_valence.j2"
-        hl_prompt_template_variables:
-          concept_adjective: "fair" #
-          neg_concept_adjective: "unfair" #
+  # fairness_contrastive-ab_explicit_end-biased: #
+  #   dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+  #   dataset_prompt_template_variables:
+  #     concept: "fairness" #
+  #     concept_question: "Should fairness be encouraged in business?" #
+  #     positive_answer: "Fairness should be encourged to prevent bad actors from exploiting the vulnerable." #
+  #     negative_answer: "No, fairness reduces compeativeness." #
+  #   header_labelling_pairs:
+  #     ethical_area:
+  #       hl_prompt_template: "concept_ethical_area.j2"
+  #       hl_prompt_template_variables:
+  #         concept_adjective: "fair" #
+  #         neg_concept_adjective: "unfair" #
+  #     ethical_valence:
+  #       hl_prompt_template: "concept_ethical_valence.j2"
+  #       hl_prompt_template_variables:
+  #         concept_adjective: "fair" #
+  #         neg_concept_adjective: "unfair" #
 
-  selfishness_contrastive-ab_explicit_end-biased:
-    dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
-    dataset_prompt_template_variables:
-      concept: "selfishness"
-      concept_question: "Is selfishness ok in a famine when taking whatever food you can get?"
-      positive_answer: "Yes, you need to prioritize your own wellbeing above all others." 
-      negative_answer: "No, it's important to consider the needs of others, not just your own."
-    header_labelling_pairs:
-      ethical_area:
-        hl_prompt_template: "concept_ethical_area.j2" 
-        hl_prompt_template_variables:
-          concept_adjective: "selfish"
-          neg_concept_adjective: "selfless"
-      ethical_valence:
-        hl_prompt_template: "concept_ethical_valence.j2"
-        hl_prompt_template_variables: 
-          concept_adjective: "selfish"
-          neg_concept_adjective: "selfless"
+  # selfishness_contrastive-ab_explicit_end-biased:
+  #   dataset_prompt_template: "concept_contrastive-ab_explicit_end-biased.j2"
+  #   dataset_prompt_template_variables:
+  #     concept: "selfishness"
+  #     concept_question: "Is selfishness ok in a famine when taking whatever food you can get?"
+  #     positive_answer: "Yes, you need to prioritize your own wellbeing above all others." 
+  #     negative_answer: "No, it's important to consider the needs of others, not just your own."
+  #   header_labelling_pairs:
+  #     ethical_area:
+  #       hl_prompt_template: "concept_ethical_area.j2" 
+  #       hl_prompt_template_variables:
+  #         concept_adjective: "selfish"
+  #         neg_concept_adjective: "selfless"
+  #     ethical_valence:
+  #       hl_prompt_template: "concept_ethical_valence.j2"
+  #       hl_prompt_template_variables: 
+  #         concept_adjective: "selfish"
+  #         neg_concept_adjective: "selfless"
